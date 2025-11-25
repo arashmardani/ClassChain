@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ŞÑÂä ˜Ñ?ã</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; padding: 20px; }
+    pre { background: #f4f4f4; padding: 15px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <h1>ÏÑ ÍÇá ÈÇÑĞÇÑ? ÏÇÏååÇ? ŞÑÂä...</h1>
+  <div id="app"></div>
+
+  <!-- Ç?äÌÇ İŞØ áæÏ ã?˜ä?ã¡ Ï?å å? JSON ÈÒÑ? ÏÇÎá ˜Ï ä?ÓÊ -->
+  <script type="module">
+    // Ç?ä ÎØ Î?á? ãåãå: ÏÇÏååÇ Ñæ ÇÒ İÇ?á ÌÏÇÇäå ã?Îæäå
+    import data from './data.json' assert { type: 'json' };
+
+    // ÍÇáÇ ã?Êæä? ÈÇ ÏÇÏååÇ åÑ ˜ÇÑ? ÏáÊ ÎæÇÓÊ È˜ä?
+    console.log("ÊÚÏÇÏ ÓæÑååÇ:", data.length);
+    console.log("ÓæÑå Çæá:", data[0]);
+
+    // ãËÇá: äãÇ?Ô ÇÓã åãå ÓæÑååÇ
+    const app = document.getElementById('app');
+    let html = '<h2>İåÑÓÊ ÓæÑååÇ:</h2><ol>';
+    
+    data.forEach(sura => {
+      html += `<li><strong>${sura.name}</strong> - ${sura.english_name} (${sura.verses_count} Â?å)</li>`;
+    });
+    
+    html += '</ol>';
+    app.innerHTML = html;
+  </script>
+</body>
+</html>
