@@ -163,19 +163,19 @@
                         layer.on('click', function() {
                             // بازگرداندن استایل قبلی به استان انتخاب شده قبلی
                             if (selectedLayer) {
-                                selectedLayer.setStyle({
+                            //    selectedLayer.setStyle({
                             //        fillOpacity: 0.3,
                             //        weight: 2,
                             //        fillColor: '#3388ff'
-                                });
+                            //    });
                             }
                             // پررنگ کردن استان انتخاب شده
-                            layer.setStyle({
+                            //layer.setStyle({
                             //    fillOpacity: 0.8,  // پررنگ‌تر
                             //    weight: 4,         // border ضخیم‌تر
                             //    fillColor: '#e74c3c',  // رنگ قرمز
                             //    color: '#c0392b'   // border تیره‌تر
-                            });
+                            //});
                             selectedLayer = layer;
                             const props = feature.properties;
                             
