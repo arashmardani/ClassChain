@@ -130,15 +130,15 @@
 
         <div class="info-panel">
             <div class="panel-header">
-                <h1>?? WebGIS ÇÓÊÇäåÇ? Ç?ÑÇä</h1>
-                <p>ÈÑÇ? ãÔÇåÏå ÇØáÇÚÇÊ Ñæ? ÇÓÊÇäåÇ ˜á?˜ ˜ä?Ï</p>
+                <h1>🌍 WebGIS استان‌های ایران</h1>
+                <p>برای مشاهده اطلاعات روی استان‌ها کلیک کنید</p>
             </div>
 
             <div class="panel-content" id="provinceInfo">
                 <div class="no-selection">
                     <div class="icon">???</div>
-                    <h3>ÇÓÊÇä ãæÑÏ äÙÑ ÑÇ ÇäÊÎÇÈ ˜ä?Ï</h3>
-                    <p>Ñæ? åÑ ÇÓÊÇä ÏÑ äÞÔå ˜á?˜ ˜ä?Ï</p>
+                    <h3>استان مورد نظر را انتخاب کنید</h3>
+                    <p>روی هر استان در نقشه کلیک کنید</p>
                 </div>
             </div>
         </div>
@@ -154,13 +154,11 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let selectedLayer = null;
-
+        // بارگذاری مستقیم داده‌های GeoJSON
         fetch('ir.json')
             .then(r => r.json())
             .then(data => {
-
                 const geo = L.geoJSON(data, {
-
                     style: function() {
                         return {
                             color: "#2980b9",
@@ -171,13 +169,10 @@
                     },
 
                     onEachFeature: function(feature, layer) {
-
                         layer.on('click', function () {
-
                             if (selectedLayer) {
                                 geo.resetStyle(selectedLayer);
                             }
-
                             this.setStyle({
                                 weight: 2,
                                 color: "#1f4788",
@@ -188,23 +183,24 @@
                             selectedLayer = this;
 
                             const props = feature.properties;
-
+                            
+                            // نمایش اطلاعات در پنل عمودی
                             document.getElementById('provinceInfo').innerHTML = `
                                 <div class="province-info">
                                     <h3>${props.name}</h3>
 
                                     <div class="info-item">
-                                        <span class="info-label">˜Ï ÇÓÊÇä:</span>
+                                        <span class="info-label">کد استان:</span>
                                         <span class="info-value">${props.id}</span>
                                     </div>
 
                                     <div class="info-item">
-                                        <span class="info-label">äÇã:</span>
+                                        <span class="info-label">نام:</span>
                                         <span class="info-value">${props.name}</span>
                                     </div>
 
                                     <div class="info-item">
-                                        <span class="info-label">ãäÈÚ:</span>
+                                        <span class="info-label">منبع:</span>
                                         <span class="info-value">${props.source}</span>
                                     </div>
                                 </div>
@@ -220,3 +216,4 @@
 </body>
 
 </html>
+
