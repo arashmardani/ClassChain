@@ -2,8 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS استان‌های ایران</title>
+    <title>WebGIS ایران</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
@@ -11,10 +10,9 @@
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
             height: 100vh;
             overflow: hidden;
         }
@@ -24,26 +22,26 @@
             height: 100vh;
         }
 
-        /* پنل اطلاعات عمودی */
+        /* پنل عمودی کناری */
         .info-panel {
-            width: 400px;
+            width: 350px;
             background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
             color: white;
             display: flex;
             flex-direction: column;
-            box-shadow: 3px 0 15px rgba(0,0,0,0.2);
+            box-shadow: -2px 0 10px rgba(0,0,0,0.3);
         }
 
         .panel-header {
             background: rgba(0, 0, 0, 0.3);
-            padding: 25px;
+            padding: 20px;
             text-align: center;
             border-bottom: 2px solid #3498db;
         }
 
         .panel-header h1 {
-            font-size: 1.5em;
-            margin-bottom: 8px;
+            font-size: 1.4em;
+            margin-bottom: 5px;
             color: #ecf0f1;
         }
 
@@ -53,70 +51,45 @@
             color: #bdc3c7;
         }
 
-        .province-list {
+        .panel-content {
             flex: 1;
-            overflow-y: auto;
             padding: 20px;
+            overflow-y: auto;
         }
 
-        .province-item {
-            background: linear-gradient(135deg, rgba(52, 73, 94, 0.8) 0%, rgba(44, 62, 80, 0.9) 100%);
-            border-radius: 10px;
-            padding: 18px;
+        .province-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
             margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            border-right: 4px solid #3498db;
         }
 
-        .province-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            border-color: #3498db;
-        }
-
-        .province-item.active {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            border-color: #e74c3c;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
-        }
-
-        .province-item h3 {
-            font-size: 1.2em;
-            margin-bottom: 10px;
+        .province-info h3 {
             color: #ecf0f1;
+            margin-bottom: 10px;
+            font-size: 1.2em;
             border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: 6px;
+            padding-bottom: 5px;
         }
 
-        .info-row {
+        .info-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
-            padding: 4px 0;
+            margin-bottom: 8px;
+            padding: 5px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .info-label {
-            font-weight: 600;
+            font-weight: bold;
             color: #bdc3c7;
-            font-size: 0.85em;
+            font-size: 0.9em;
         }
 
         .info-value {
             color: #ecf0f1;
-            font-weight: 500;
             text-align: left;
-        }
-
-        .cities-list {
-            margin-top: 8px;
-            padding: 8px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 5px;
-            font-size: 0.85em;
         }
 
         .no-selection {
@@ -127,7 +100,7 @@
         }
 
         .no-selection .icon {
-            font-size: 2.5em;
+            font-size: 3em;
             margin-bottom: 15px;
             opacity: 0.5;
         }
@@ -138,17 +111,17 @@
             height: 100vh;
         }
 
-        /* اسکرول بار */
-        .province-list::-webkit-scrollbar {
+        /* اسکرول بار زیبا */
+        .panel-content::-webkit-scrollbar {
             width: 6px;
         }
 
-        .province-list::-webkit-scrollbar-track {
+        .panel-content::-webkit-scrollbar-track {
             background: rgba(0,0,0,0.1);
             border-radius: 3px;
         }
 
-        .province-list::-webkit-scrollbar-thumb {
+        .panel-content::-webkit-scrollbar-thumb {
             background: #3498db;
             border-radius: 3px;
         }
@@ -156,14 +129,14 @@
 </head>
 <body>
     <div class="container">
-        <!-- پنل اطلاعات عمودی -->
+        <!-- پنل عمودی کناری -->
         <div class="info-panel">
             <div class="panel-header">
                 <h1>🌍 WebGIS استان‌های ایران</h1>
                 <p>برای مشاهده اطلاعات روی استان‌ها کلیک کنید</p>
             </div>
             
-            <div class="province-list" id="provinceList">
+            <div class="panel-content" id="provinceInfo">
                 <div class="no-selection">
                     <div class="icon">🗺️</div>
                     <h3>استان مورد نظر را انتخاب کنید</h3>
@@ -178,294 +151,74 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // اطلاعات استان‌ها
-        const provincesData = {
-            "IR01": {
-                name: "آذربایجان شرقی",
-                capital: "تبریز",
-                population: "۴,۱۰۰,۰۰۰ نفر",
-                area: "۴۵,۶۵۰ کیلومتر مربع",
-                cities: ["تبریز", "مراغه", "مرند", "اهر", "میانه"],
-                description: "استان آذربایجان شرقی در شمال غرب ایران قرار دارد."
-            },
-            "IR02": {
-                name: "آذربایجان غربی",
-                capital: "ارومیه",
-                population: "۳,۷۰۰,۰۰۰ نفر",
-                area: "۳۷,۴۱۱ کیلومتر مربع",
-                cities: ["ارومیه", "خوی", "مهاباد", "میاندوآب", "بوکان"],
-                description: "استان آذربایجان غربی در مرز ترکیه و عراق قرار دارد."
-            },
-            "IR03": {
-                name: "اردبیل",
-                capital: "اردبیل",
-                population: "۱,۳۰۰,۰۰۰ نفر",
-                area: "۱۷,۸۰۰ کیلومتر مربع",
-                cities: ["اردبیل", "مشگین‌شهر", "پارس‌آباد", "گرمی", "خلخال"],
-                description: "استان اردبیل در شمال غرب ایران و هم‌مرز با جمهوری آذربایجان است."
-            },
-            "IR05": {
-                name: "ایلام",
-                capital: "ایلام",
-                population: "۶۰۰,۰۰۰ نفر",
-                area: "۲۰,۱۳۳ کیلومتر مربع",
-                cities: ["ایلام", "دهلران", "ایوان", "مهران", "آبدانان"],
-                description: "استان ایلام در غرب ایران و هم‌مرز با عراق قرار دارد."
-            },
-            "IR10": {
-                name: "خوزستان",
-                capital: "اهواز",
-                population: "۴,۷۰۰,۰۰۰ نفر",
-                area: "۶۴,۰۵۷ کیلومتر مربع",
-                cities: ["اهواز", "آبادان", "خرمشهر", "دزفول", "شوشتر"],
-                description: "استان خوزستان در جنوب غرب ایران و دارای منابع نفتی مهمی است."
-            },
-            "IR16": {
-                name: "کردستان",
-                capital: "سنندج",
-                population: "۱,۶۰۰,۰۰۰ نفر",
-                area: "۲۹,۱۳۷ کیلومتر مربع",
-                cities: ["سنندج", "سقز", "مریوان", "بانه", "قروه"],
-                description: "استان کردستان در غرب ایران و دارای طبیعت کوهستانی زیبایی است."
-            },
-            "IR17": {
-                name: "کرمانشاه",
-                capital: "کرمانشاه",
-                population: "۲,۰۰۰,۰۰۰ نفر",
-                area: "۲۴,۹۹۸ کیلومتر مربع",
-                cities: ["کرمانشاه", "اسلام‌آباد غرب", "هرسین", "کنگاور", "پاوه"],
-                description: "استان کرمانشاه در غرب ایران و دارای آثار تاریخی متعددی است."
-            },
-            "IR19": {
-                name: "گیلان",
-                capital: "رشت",
-                population: "۲,۵۰۰,۰۰۰ نفر",
-                area: "۱۴,۰۴۲ کیلومتر مربع",
-                cities: ["رشت", "انزلی", "لاهیجان", "آستارا", "تالش"],
-                description: "استان گیلان در شمال ایران و کنار دریای خزر قرار دارد."
-            },
-            "IR28": {
-                name: "خراسان شمالی",
-                capital: "بجنورد",
-                population: "۹۰۰,۰۰۰ نفر",
-                area: "۲۸,۴۳۴ کیلومتر مربع",
-                cities: ["بجنورد", "شیروان", "اسفراین", "جاجرم", "فاروج"],
-                description: "استان خراسان شمالی در شمال شرق ایران قرار دارد."
-            }
-        };
-
-        // متغیرهای global
         const map = L.map('map').setView([32.4279, 53.6880], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        let selectedProvince = null;
-        let selectedLayer = null;
-
-        // بارگذاری داده‌های GeoJSON
+        // بارگذاری مستقیم داده‌های GeoJSON
         fetch('ir.json')
             .then(r => r.json())
             .then(data => {
-                // ایجاد لایه استان‌ها
-                const provincesLayer = L.geoJSON(data, {
-                    style: {
-                        fillColor: '#3388ff',
-                        weight: 2,
-                        opacity: 1,
-                        color: 'white',
-                        fillOpacity: 0.3
-                    },
+                L.geoJSON(data, {
                     onEachFeature: function(feature, layer) {
-                        const provinceId = feature.properties.id;
-                        
-                        layer.on('click', function(e) {
-                            selectProvince(provinceId, layer);
-                            e.originalEvent.stopPropagation();
-                        });
-                        
-                        // هاور افکت
-                        layer.on('mouseover', function() {
-                            if (provinceId !== selectedProvince) {
-                                layer.setStyle({
-                                    fillOpacity: 0.5,
-                                    weight: 3
-                                });
-                            }
-                        });
-                        
-                        layer.on('mouseout', function() {
-                            if (provinceId !== selectedProvince) {
-                                layer.setStyle({
-                                    fillOpacity: 0.3,
-                                    weight: 2
-                                });
-                            }
+                        layer.on('click', function() {
+                            const props = feature.properties;
+                            
+                            // نمایش اطلاعات در پنل عمودی
+                            document.getElementById('provinceInfo').innerHTML = `
+                                <div class="province-info">
+                                    <h3>${props.name}</h3>
+                                    <div class="info-item">
+                                        <span class="info-label">کد استان:</span>
+                                        <span class="info-value">${props.id}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">نام:</span>
+                                        <span class="info-value">${props.name}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">منبع:</span>
+                                        <span class="info-value">${props.source}</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: center; margin-top: 20px;">
+                                    <button onclick="resetSelection()" style="
+                                        background: #3498db;
+                                        color: white;
+                                        border: none;
+                                        padding: 8px 16px;
+                                        border-radius: 5px;
+                                        cursor: pointer;
+                                        font-size: 0.9em;
+                                    ">
+                                        بازگشت به صفحه اول
+                                    </button>
+                                </div>
+                            `;
                         });
                     }
                 }).addTo(map);
-
-                // تنظیم نمای نقشه
-                map.fitBounds(provincesLayer.getBounds());
-                
-                // ایجاد لیست استان‌ها
-                createProvincesList();
             })
             .catch(err => {
                 console.error('Error:', err);
-                document.getElementById('provinceList').innerHTML = 'خطا در بارگذاری داده‌ها';
-            });
-
-        // انتخاب استان
-        function selectProvince(provinceId, layer) {
-            // بازگرداندن استایل قبلی به همه استان‌ها
-            map.eachLayer(function(mapLayer) {
-                if (mapLayer.feature && mapLayer.setStyle) {
-                    if (mapLayer.feature.properties.id !== provinceId) {
-                        mapLayer.setStyle({
-                            fillOpacity: 0.3,
-                            weight: 2,
-                            fillColor: '#3388ff'
-                        });
-                    }
-                }
-            });
-
-            // برجسته کردن استان جدید (پررنگ‌تر)
-            selectedProvince = provinceId;
-            selectedLayer = layer;
-            
-            layer.setStyle({
-                fillOpacity: 0.8,  // پررنگ‌تر شدن
-                weight: 4,
-                fillColor: '#e74c3c',  // رنگ قرمز برای انتخاب
-                color: '#c0392b'
-            });
-
-            // نمایش اطلاعات استان
-            showProvinceInfo(provinceId);
-        }
-
-        // ایجاد لیست استان‌ها در پنل
-        function createProvincesList() {
-            const provinceList = document.getElementById('provinceList');
-            let html = '';
-
-            Object.keys(provincesData).forEach(provinceId => {
-                const province = provincesData[provinceId];
-                const isActive = provinceId === selectedProvince ? 'active' : '';
-                
-                html += `
-                    <div class="province-item ${isActive}" onclick="selectProvinceFromList('${provinceId}')">
-                        <h3>${province.name}</h3>
-                        <div class="info-row">
-                            <span class="info-label">مرکز:</span>
-                            <span class="info-value">${province.capital}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">جمعیت:</span>
-                            <span class="info-value">${province.population}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">مساحت:</span>
-                            <span class="info-value">${province.area}</span>
-                        </div>
-                        <div class="cities-list">
-                            <strong>شهرهای مهم:</strong> ${province.cities.join('، ')}
-                        </div>
+                document.getElementById('provinceInfo').innerHTML = `
+                    <div class="no-selection">
+                        <div class="icon">❌</div>
+                        <h3>خطا در بارگذاری داده‌ها</h3>
+                        <p>${err.message}</p>
                     </div>
                 `;
             });
 
-            provinceList.innerHTML = html;
-        }
-
-        // انتخاب استان از لیست
-        function selectProvinceFromList(provinceId) {
-            // پیدا کردن لایه مربوطه در نقشه
-            map.eachLayer(function(layer) {
-                if (layer.feature && layer.feature.properties.id === provinceId) {
-                    selectProvince(provinceId, layer);
-                    
-                    // پان کردن نقشه به استان انتخاب شده
-                    map.fitBounds(layer.getBounds(), {
-                        padding: [50, 50],
-                        maxZoom: 8
-                    });
-                }
-            });
-        }
-
-        // نمایش اطلاعات استان
-        function showProvinceInfo(provinceId) {
-            const province = provincesData[provinceId];
-            if (!province) return;
-
-            const provinceList = document.getElementById('provinceList');
-            provinceList.innerHTML = `
-                <div class="province-item active">
-                    <h3>${province.name}</h3>
-                    <div class="info-row">
-                        <span class="info-label">مرکز استان:</span>
-                        <span class="info-value">${province.capital}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">جمعیت:</span>
-                        <span class="info-value">${province.population}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">مساحت:</span>
-                        <span class="info-value">${province.area}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">شهرهای مهم:</span>
-                        <span class="info-value">${province.cities.join('، ')}</span>
-                    </div>
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                        <div class="info-label" style="margin-bottom: 8px;">توضیحات:</div>
-                        <div class="info-value" style="line-height: 1.6; text-align: justify;">
-                            ${province.description}
-                        </div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="showAllProvinces()" style="
-                        background: #3498db;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        border-radius: 6px;
-                        cursor: pointer;
-                        font-size: 0.9em;
-                    ">
-                        ← نمایش همه استان‌ها
-                    </button>
+        // تابع بازگشت به حالت اولیه
+        function resetSelection() {
+            document.getElementById('provinceInfo').innerHTML = `
+                <div class="no-selection">
+                    <div class="icon">🗺️</div>
+                    <h3>استان مورد نظر را انتخاب کنید</h3>
+                    <p>روی هر استان در نقشه کلیک کنید</p>
                 </div>
             `;
         }
-
-        // نمایش همه استان‌ها
-        function showAllProvinces() {
-            selectedProvince = null;
-            
-            // بازگرداندن استایل همه استان‌ها
-            map.eachLayer(function(layer) {
-                if (layer.feature && layer.setStyle) {
-                    layer.setStyle({
-                        fillOpacity: 0.3,
-                        weight: 2,
-                        fillColor: '#3388ff',
-                        color: 'white'
-                    });
-                }
-            });
-            
-            // بازگرداندن لیست کامل
-            createProvincesList();
-        }
-
-        // کلیک روی نقشه برای ریست
-        map.on('click', function() {
-            showAllProvinces();
-        });
     </script>
 </body>
 </html>
