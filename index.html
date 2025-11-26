@@ -166,12 +166,10 @@
                         weight: 2,
                         opacity: 1,
                         color: 'white',
-                        fillOpacity: 0.3  // شفافیت اولیه برای همه استان‌ها
+                        fillOpacity: 0.3
                     },
                     onEachFeature: function(feature, layer) {
                         layer.on('click', function() {
-                            const props = feature.properties;
-                            
                             // بازگرداندن استایل قبلی به استان انتخاب شده قبلی
                             if (selectedLayer) {
                                 selectedLayer.setStyle({
@@ -180,16 +178,18 @@
                                     fillColor: '#3388ff'
                                 });
                             }
-                            
+
                             // پررنگ کردن استان انتخاب شده
                             layer.setStyle({
-                                fillOpacity: 0.8,  // پررنگ‌تر شدن
-                                weight: 3,
-                                fillColor: '#e74c3c',  // رنگ قرمز برای انتخاب
-                                color: '#c0392b'
+                                fillOpacity: 0.8,  // پررنگ‌تر
+                                weight: 4,         // border ضخیم‌تر
+                                fillColor: '#e74c3c',  // رنگ قرمز
+                                color: '#c0392b'   // border تیره‌تر
                             });
-                            
+
                             selectedLayer = layer;
+
+                            const props = feature.properties;
                             
                             // نمایش اطلاعات در پنل عمودی
                             document.getElementById('provinceInfo').innerHTML = `
@@ -229,7 +229,7 @@
                             if (layer !== selectedLayer) {
                                 layer.setStyle({
                                     fillOpacity: 0.5,
-                                    weight: 2.5
+                                    weight: 3
                                 });
                             }
                         });
@@ -258,7 +258,6 @@
 
         // تابع بازگشت به حالت اولیه
         function resetSelection() {
-            // بازگرداندن استایل همه استان‌ها به حالت عادی
             if (selectedLayer) {
                 selectedLayer.setStyle({
                     fillOpacity: 0.3,
@@ -268,7 +267,7 @@
                 });
                 selectedLayer = null;
             }
-            
+
             document.getElementById('provinceInfo').innerHTML = `
                 <div class="no-selection">
                     <div class="icon">🗺️</div>
