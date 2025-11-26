@@ -1,38 +1,167 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<!doctype html>
+<html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ŞÑÂä ˜Ñ?ã</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple WebGIS — Provinces</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+e2o1h5g9Qd4u3mZ0J3q8Q+Q0b0q4kH2f3kZ6kD3I="
+    crossorigin=""/>
+
   <style>
-    body { font-family: Tahoma, sans-serif; padding: 20px; }
-    pre { background: #f4f4f4; padding: 15px; border-radius: 8px; }
+    html,body,#map { height:100%; margin:0; padding:0; }
+    body { direction: rtl; font-family: "Tahoma", sans-serif; }
+    #app {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      height: 100vh;
+    }
+    #map {
+      border-left: 1px solid #ddd;
+    }
+    #panel {
+      padding: 12px;
+      box-sizing: border-box;
+      background: #f7f7f7;
+      overflow:auto;
+    }
+    .info-title { font-weight:700; margin-bottom:8px; }
+    .prop { margin:6px 0; }
+    .btn { display:inline-block; padding:6px 10px; border-radius:6px; background:#2b7cff; color:white; text-decoration:none; cursor:pointer; }
+    /* default style for provinces */
+    .province-style {
+      color: #333;
+      weight: 1;
+      fillOpacity: 0.4;
+    }
+    /* highlight */
+    .highlight {
+      color: #ff6600 !important;
+      weight: 3 !important;
+      fillOpacity: 0.6 !important;
+    }
   </style>
 </head>
 <body>
+  <div id="app">
+    <div id="map"></div>
+    <div id="panel">
+      <div class="info-title">ÇØáÇÚÇÊ ÇÓÊÇä</div>
+      <div id="info">ÈÑÇ? ãÔÇåÏå? ÇØáÇÚÇÊ¡ Ñæ? ?˜ ÇÓÊÇä ˜á?˜ ˜ä?Ï.</div>
+      <hr />
+      <div style="margin-top:8px;">
+        <button id="zoomAll" class="btn">äãÇ?Ô ˜á ˜ÔæÑ</button>
+        <button id="resetHighlight" class="btn" style="background:#777;margin-right:6px;">Ñ?ÓÊ ÇäÊÎÇÈ</button>
+      </div>
+    </div>
+  </div>
 
-  <h1>ÏÑ ÍÇá ÈÇÑĞÇÑ? ÏÇÏååÇ? ŞÑÂä...</h1>
-  <div id="app"></div>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-QVqDo3VY0qvTqJ9VQ+1t5xQfA0wFJ0p3V4c6z0u6+gM="
+    crossorigin=""></script>
 
-  <!-- Ç?äÌÇ İŞØ áæÏ ã?˜ä?ã¡ Ï?å å? JSON ÈÒÑ? ÏÇÎá ˜Ï ä?ÓÊ -->
-  <script type="module">
-    // Ç?ä ÎØ Î?á? ãåãå: ÏÇÏååÇ Ñæ ÇÒ İÇ?á ÌÏÇÇäå ã?Îæäå
-    import data from './data.json' assert { type: 'json' };
-
-    // ÍÇáÇ ã?Êæä? ÈÇ ÏÇÏååÇ åÑ ˜ÇÑ? ÏáÊ ÎæÇÓÊ È˜ä?
-    console.log("ÊÚÏÇÏ ÓæÑååÇ:", data.length);
-    console.log("ÓæÑå Çæá:", data[0]);
-
-    // ãËÇá: äãÇ?Ô ÇÓã åãå ÓæÑååÇ
-    const app = document.getElementById('app');
-    let html = '<h2>İåÑÓÊ ÓæÑååÇ:</h2><ol>';
-    
-    data.forEach(sura => {
-      html += `<li><strong>${sura.name}</strong> - ${sura.english_name} (${sura.verses_count} Â?å)</li>`;
+  <script>
+    // ÓÇÎÊ äŞÔå ÈÏæä áÇ?å? ÓÒã?äå
+    const map = L.map('map', {
+      worldCopyJump: true,
+      zoomControl: true
     });
-    
-    html += '</ol>';
-    app.innerHTML = html;
+
+    // ÇÑ ÎæÇÓÊ?Ï äŞÔå ÑÇ ÏÑ ?˜ ãÍÏæÏå? ãäÇÓÈ ŞÑÇÑ Ïå?Ï¡ ÈÚÏ ÇÒ ÈÇÑĞÇÑ? GeoJSON ÇÒ fitBounds ÇÓÊİÇÏå ã?˜ä?ã.
+
+    let geojsonLayer = null;
+    let lastSelected = null;
+
+    // ÇÓÊÇ?á ÇÓÊÇäÏÇÑÏ ÈÑÇ? İ?ÑåÇ
+    function style(feature) {
+      return {
+        color: '#2a6f9e',
+        weight: 1,
+        fillOpacity: 0.35
+      };
+    }
+
+    // æŞÊ? Ñæ? İ?Ñ ˜á?˜ ÔÏ
+    function onEachFeature(feature, layer) {
+      layer.on({
+        click: (e) => {
+          selectFeature(e.target, feature);
+        },
+        mouseover: (e) => {
+          e.target.setStyle({ weight:2, fillOpacity:0.45 });
+        },
+        mouseout: (e) => {
+          // ÇÑ Ç?ä İ?Ñ ÇäÊÎÇÈ äÔÏå ÈÇÔÏ¡ ÇÓÊÇ?á ÑÇ Ñ?ÓÊ ˜ä
+          if (!e.target.classList || !e.target.classList.contains('selected')) {
+            geojsonLayer.resetStyle(e.target);
+          }
+        }
+      });
+    }
+
+    function selectFeature(layer, feature) {
+      // Ñ?ÓÊ ÇäÊÎÇÈ ŞÈá?
+      if (lastSelected && lastSelected !== layer) {
+        lastSelected.setStyle(style(lastSelected.feature));
+        if (lastSelected.classList) lastSelected.classList.remove('selected');
+      }
+      // ÇÚãÇá åÇ?áÇ?Ê
+      layer.setStyle({ color:'#ff6600', weight:3, fillOpacity:0.6 });
+      if (layer.classList) layer.classList.add('selected');
+      lastSelected = layer;
+
+      // äãÇ?Ô ÇØáÇÚÇÊ ÏÑ äá ˜äÇÑ
+      const info = document.getElementById('info');
+      // ÇÒ ÑÇÑÊ?åÇ? ãæÌæÏ ÇÓÊİÇÏå ˜ä: ãÚãæáÇğ feature.properties.name æ feature.properties.id ãæÌæÏ ÇÓÊ
+      const name = feature.properties && feature.properties.name ? feature.properties.name : 'äÇã äÏÇÑÏ';
+      const id = feature.properties && feature.properties.id ? feature.properties.id : 'ÔäÇÓå äÏÇÑÏ';
+      info.innerHTML = `
+        <div class="prop"><strong>äÇã:</strong> ${name}</div>
+        <div class="prop"><strong>˜Ï (id):</strong> ${id}</div>
+        <div class="prop"><strong>ÑÇÑÊ?åÇ (ÊãÇã):</strong><pre style="white-space:pre-wrap;">${JSON.stringify(feature.properties, null, 2)}</pre></div>
+      `;
+
+      // Òæã ˜ÑÏä Èå ãÍÏæÏå? İ?Ñ
+      try {
+        map.fitBounds(layer.getBounds(), { maxZoom: 8, padding: [20,20] });
+      } catch(e){ /* ÈÚÖ? İ?ÑåÇ MultiPolygon æ ... ãã˜ä ÇÓÊ ä?ÇÒ Èå åäÏá ÎÇÕ ÏÇÔÊå ÈÇÔäÏ */ }
+    }
+
+    // ÈÇÑĞÇÑ? GeoJSON ãÍá?
+    fetch('ir.json')
+      .then(resp => {
+        if (!resp.ok) throw new Error('ÎØÇ ÏÑ ÈÇÑĞÇÑ? ir.json — ãØãÆä Ôæ?Ï İÇ?á ˜äÇÑ index.html ÇÓÊ æ ÓÑæÑ ãÍá? ÇÌÑÇ ÔÏå ÇÓÊ.');
+        return resp.json();
+      })
+      .then(data => {
+        geojsonLayer = L.geoJSON(data, {
+          style: style,
+          onEachFeature: onEachFeature
+        }).addTo(map);
+
+        // ÇÑ ÈÏæä áÇ?å ÓÒã?äå åÓÊ?ã¡ ÈÇ?Ï ?˜ view ãÚŞæá ÊäÙ?ã ˜ä?ã:
+        map.fitBounds(geojsonLayer.getBounds(), { padding: [20,20] });
+      })
+      .catch(err => {
+        document.getElementById('info').innerText = 'ÎØÇ åäÇã ÈÇÑĞÇÑ? GeoJSON: ' + err.message;
+        console.error(err);
+      });
+
+    // Ï˜ãååÇ
+    document.getElementById('zoomAll').addEventListener('click', () => {
+      if (geojsonLayer) map.fitBounds(geojsonLayer.getBounds(), { padding:[20,20] });
+    });
+    document.getElementById('resetHighlight').addEventListener('click', () => {
+      if (lastSelected) {
+        geojsonLayer.resetStyle(lastSelected);
+        if (lastSelected.classList) lastSelected.classList.remove('selected');
+        lastSelected = null;
+        document.getElementById('info').innerText = 'ÈÑÇ? ãÔÇåÏå? ÇØáÇÚÇÊ¡ Ñæ? ?˜ ÇÓÊÇä ˜á?˜ ˜ä?Ï.';
+      }
+    });
   </script>
 </body>
 </html>
