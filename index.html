@@ -154,14 +154,42 @@
         const map = L.map('map').setView([32.4279, 53.6880], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+        let selectedLayer = null;
+
         // بارگذاری مستقیم داده‌های GeoJSON
         fetch('ir.json')
             .then(r => r.json())
             .then(data => {
                 L.geoJSON(data, {
+                    style: {
+                        fillColor: '#3388ff',
+                        weight: 2,
+                        opacity: 1,
+                        color: 'white',
+                        fillOpacity: 0.3  // شفافیت اولیه برای همه استان‌ها
+                    },
                     onEachFeature: function(feature, layer) {
                         layer.on('click', function() {
                             const props = feature.properties;
+                            
+                            // بازگرداندن استایل قبلی به استان انتخاب شده قبلی
+                            if (selectedLayer) {
+                                selectedLayer.setStyle({
+                                    fillOpacity: 0.3,
+                                    weight: 2,
+                                    fillColor: '#3388ff'
+                                });
+                            }
+                            
+                            // پررنگ کردن استان انتخاب شده
+                            layer.setStyle({
+                                fillOpacity: 0.8,  // پررنگ‌تر شدن
+                                weight: 3,
+                                fillColor: '#e74c3c',  // رنگ قرمز برای انتخاب
+                                color: '#c0392b'
+                            });
+                            
+                            selectedLayer = layer;
                             
                             // نمایش اطلاعات در پنل عمودی
                             document.getElementById('provinceInfo').innerHTML = `
@@ -195,6 +223,25 @@
                                 </div>
                             `;
                         });
+
+                        // افکت hover
+                        layer.on('mouseover', function() {
+                            if (layer !== selectedLayer) {
+                                layer.setStyle({
+                                    fillOpacity: 0.5,
+                                    weight: 2.5
+                                });
+                            }
+                        });
+
+                        layer.on('mouseout', function() {
+                            if (layer !== selectedLayer) {
+                                layer.setStyle({
+                                    fillOpacity: 0.3,
+                                    weight: 2
+                                });
+                            }
+                        });
                     }
                 }).addTo(map);
             })
@@ -211,6 +258,17 @@
 
         // تابع بازگشت به حالت اولیه
         function resetSelection() {
+            // بازگرداندن استایل همه استان‌ها به حالت عادی
+            if (selectedLayer) {
+                selectedLayer.setStyle({
+                    fillOpacity: 0.3,
+                    weight: 2,
+                    fillColor: '#3388ff',
+                    color: 'white'
+                });
+                selectedLayer = null;
+            }
+            
             document.getElementById('provinceInfo').innerHTML = `
                 <div class="no-selection">
                     <div class="icon">🗺️</div>
@@ -219,6 +277,11 @@
                 </div>
             `;
         }
+
+        // کلیک روی نقشه برای ریست
+        map.on('click', function() {
+            resetSelection();
+        });
     </script>
 </body>
 </html>
