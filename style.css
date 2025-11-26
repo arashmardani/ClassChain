@@ -1,0 +1,27 @@
+body {
+    margin: 0;
+    padding: 0;
+font-family: 'Tahoma', 'Segoe UI', sans-serif;  /* «?‰ Œÿ „Â„ «”  */
+direction: rtl;
+text-align: right;
+}
+
+#map {
+    height: 100vh;
+    width: 80%;
+    float: right; /* ‰ﬁ‘Â œ— ”„  —«”  */
+}
+
+#info-panel {
+    height: 100vh;
+    width: 20%;
+    float: left; /* Å‰· «ÿ·«⁄«  œ— ”„  çÅ */
+    padding: 20px;
+    background-color: #f4f4f4;
+    box-sizing: border-box;
+    overflow-y: auto; /* «ê— «ÿ·«⁄«  “?«œ »«‘œ° «”ò—Ê· „?ù‘Êœ */
+}
+
+h2 {
+    margin-top: 0;
+}
