@@ -161,13 +161,13 @@
                 L.geoJSON(data, {
                     onEachFeature: function(feature, layer) {
                             // بازگرداندن استایل قبلی به استان انتخاب شده قبلی
-                            if (selectedLayer) {
-                                selectedLayer.setStyle({
-                                    fillOpacity: 0.3,
-                                    weight: 2,
-                                    fillColor: '#3388ff'
-                                });
-                            }
+                           // if (selectedLayer) {
+                           //     selectedLayer.setStyle({
+                           //         fillOpacity: 0.3,
+                           //         weight: 2,
+                           //         fillColor: '#3388ff'
+                           //     });
+                           // }
                             // پررنگ کردن استان انتخاب شده
                             layer.setStyle({
                                 fillOpacity: 0.8,  // پررنگ‌تر
