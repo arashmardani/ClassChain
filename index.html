@@ -159,13 +159,6 @@
             .then(r => r.json())
             .then(data => {
                 L.geoJSON(data, {
-                    style: {
-                        fillColor: '#3388ff',
-                        weight: 2,
-                        opacity: 1,
-                        color: 'white',
-                        fillOpacity: 0.3
-                    }
                     onEachFeature: function(feature, layer) {
                         layer.on('click', function() {
                             const props = feature.properties;
