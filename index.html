@@ -159,8 +159,29 @@
             .then(r => r.json())
             .then(data => {
                 L.geoJSON(data, {
+                    style: {
+                        color: "#2c3e50",
+                        weight: 1,
+                        fillColor: "#3498db",
+                        fillOpacity: 0.4
+                    },
                     onEachFeature: function(feature, layer) {
                         layer.on('click', function() {
+                            // ریست کردن انتخاب قبلی
+                            if (selectedLayer) {
+                                selectedLayer.setStyle({
+                                    weight: 1,
+                                    fillOpacity: 0.4
+                                });
+                            }
+
+                            // برجسته کردن استان جدید
+                            layer.setStyle({
+                                weight: 3,
+                                fillOpacity: 0.7
+                            });
+
+                            selectedLayer = layer;
                             const props = feature.properties;
                             
                             // نمایش اطلاعات در پنل عمودی
