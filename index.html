@@ -2,15 +2,16 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>WebGIS ایران</title>
+    <title>WebGIS �?���</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
@@ -22,7 +23,6 @@
             height: 100vh;
         }
 
-        /* پنل عمودی کناری */
         .info-panel {
             width: 350px;
             background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
@@ -105,141 +105,117 @@
             opacity: 0.5;
         }
 
-        /* نقشه */
         #map {
             flex: 1;
             height: 100vh;
         }
 
-        /* اسکرول بار زیبا */
         .panel-content::-webkit-scrollbar {
             width: 6px;
         }
-
         .panel-content::-webkit-scrollbar-track {
             background: rgba(0,0,0,0.1);
             border-radius: 3px;
         }
-
         .panel-content::-webkit-scrollbar-thumb {
             background: #3498db;
             border-radius: 3px;
         }
     </style>
 </head>
+
 <body>
+
     <div class="container">
-        <!-- پنل عمودی کناری -->
+
         <div class="info-panel">
             <div class="panel-header">
-                <h1>🌍 WebGIS استان‌های ایران</h1>
-                <p>برای مشاهده اطلاعات روی استان‌ها کلیک کنید</p>
+                <h1>?? WebGIS �������? �?���</h1>
+                <p>���? ������ ������� ��? ������� ��?� ��?�</p>
             </div>
-            
+
             <div class="panel-content" id="provinceInfo">
                 <div class="no-selection">
-                    <div class="icon">🗺️</div>
-                    <h3>استان مورد نظر را انتخاب کنید</h3>
-                    <p>روی هر استان در نقشه کلیک کنید</p>
+                    <div class="icon">???</div>
+                    <h3>����� ���� ��� �� ������ ��?�</h3>
+                    <p>��? �� ����� �� ���� ��?� ��?�</p>
                 </div>
             </div>
         </div>
 
-        <!-- نقشه -->
         <div id="map"></div>
+
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
         const map = L.map('map').setView([32.4279, 53.6880], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // بارگذاری مستقیم داده‌های GeoJSON
+        let selectedLayer = null;
+
         fetch('ir.json')
             .then(r => r.json())
             .then(data => {
-                L.geoJSON(data, {
-                    style: {
-                        color: "#2c3e50",
-                        weight: 1,
-                        fillColor: "#3498db",
-                        fillOpacity: 0.4
+
+                const geo = L.geoJSON(data, {
+
+                    style: function() {
+                        return {
+                            color: "#2980b9",
+                            weight: 1,
+                            fillColor: "#3498db",
+                            fillOpacity: 0.4
+                        };
                     },
+
                     onEachFeature: function(feature, layer) {
-                        layer.on('click', function() {
-                            // ریست کردن انتخاب قبلی
+
+                        layer.on('click', function () {
+
                             if (selectedLayer) {
-                                selectedLayer.setStyle({
-                                    weight: 1,
-                                    fillOpacity: 0.4
-                                });
+                                geo.resetStyle(selectedLayer);
                             }
 
-                            // برجسته کردن استان جدید
-                            layer.setStyle({
-                                weight: 3,
+                            this.setStyle({
+                                weight: 2,
+                                color: "#1f4788",
+                                fillColor: "#1f4788",
                                 fillOpacity: 0.7
                             });
 
-                            selectedLayer = layer;
+                            selectedLayer = this;
+
                             const props = feature.properties;
-                            
-                            // نمایش اطلاعات در پنل عمودی
+
                             document.getElementById('provinceInfo').innerHTML = `
                                 <div class="province-info">
                                     <h3>${props.name}</h3>
+
                                     <div class="info-item">
-                                        <span class="info-label">کد استان:</span>
+                                        <span class="info-label">�� �����:</span>
                                         <span class="info-value">${props.id}</span>
                                     </div>
+
                                     <div class="info-item">
-                                        <span class="info-label">نام:</span>
+                                        <span class="info-label">���:</span>
                                         <span class="info-value">${props.name}</span>
                                     </div>
+
                                     <div class="info-item">
-                                        <span class="info-label">منبع:</span>
+                                        <span class="info-label">����:</span>
                                         <span class="info-value">${props.source}</span>
                                     </div>
-                                </div>
-                                <div style="text-align: center; margin-top: 20px;">
-                                    <button onclick="resetSelection()" style="
-                                        background: #3498db;
-                                        color: white;
-                                        border: none;
-                                        padding: 8px 16px;
-                                        border-radius: 5px;
-                                        cursor: pointer;
-                                        font-size: 0.9em;
-                                    ">
-                                        بازگشت به صفحه اول
-                                    </button>
                                 </div>
                             `;
                         });
                     }
-                }).addTo(map);
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                document.getElementById('provinceInfo').innerHTML = `
-                    <div class="no-selection">
-                        <div class="icon">❌</div>
-                        <h3>خطا در بارگذاری داده‌ها</h3>
-                        <p>${err.message}</p>
-                    </div>
-                `;
-            });
 
-        // تابع بازگشت به حالت اولیه
-        function resetSelection() {
-            document.getElementById('provinceInfo').innerHTML = `
-                <div class="no-selection">
-                    <div class="icon">🗺️</div>
-                    <h3>استان مورد نظر را انتخاب کنید</h3>
-                    <p>روی هر استان در نقشه کلیک کنید</p>
-                </div>
-            `;
-        }
+                }).addTo(map);
+
+            });
     </script>
+
 </body>
 </html>
