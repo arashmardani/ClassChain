@@ -22,7 +22,8 @@
             display: flex;
             height: 100vh;
         }
-
+		
+        /* پنل عمودی کناری */
         .info-panel {
             width: 350px;
             background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
@@ -105,11 +106,13 @@
             opacity: 0.5;
         }
 
+        /* نقشه */
         #map {
             flex: 1;
             height: 100vh;
         }
 
+        /* اسکرول بار زیبا */
         .panel-content::-webkit-scrollbar {
             width: 6px;
         }
@@ -127,7 +130,7 @@
 <body>
 
     <div class="container">
-
+        <!-- پنل عمودی کناری -->
         <div class="info-panel">
             <div class="panel-header">
                 <h1>🌍 WebGIS استان‌های ایران</h1>
@@ -142,7 +145,8 @@
                 </div>
             </div>
         </div>
-
+		
+        <!-- نقشه -->
         <div id="map"></div>
 
     </div>
@@ -154,6 +158,7 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let selectedLayer = null;
+		
         // بارگذاری مستقیم داده‌های GeoJSON
         fetch('ir.json')
             .then(r => r.json())
