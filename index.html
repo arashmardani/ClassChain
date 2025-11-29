@@ -289,25 +289,28 @@
     <span>نمایش کل ایران</span>
 </div>
 <style>
-    .custom-basemap-selector {
+    .custom-basemap-selector, .home-button {
         position: absolute;
+        z-index: 1000;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(12px);
+        border-radius: 30px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.4);
+        font-family: inherit;
+        user-select: none;
+        transition: all 0.3s ease;
+    }
+    .custom-basemap-selector {
         bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.95);
         padding: 10px 20px;
-        border-radius: 30px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,0.4);
-        font-family: inherit;
     }
     #basemapSelect {
         padding: 12px 24px;
         font-size: 15px;
         border: none;
-        border-radius: 25px;
         background: transparent;
         color: #2c3e50;
         cursor: pointer;
@@ -316,13 +319,23 @@
         text-align: center;
         font-weight: 500;
     }
+    .home-button {
+        bottom: 24px;
+        right: 20px;
+        padding: 12px 20px;
+        cursor: pointer;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .home-button:hover, .custom-basemap-selector:hover { background: #3498db; color: white; }
     @media (max-width: 768px) {
+        .home-button { bottom: 78px; right: 15px; font-size: 13px; padding: 10px 16px; }
         .custom-basemap-selector { bottom: 15px; }
         #basemapSelect { font-size: 14px; padding: 10px 20px; }
     }
 </style>
-
-<script>
+	<script>
     // تعریف لایه‌ها (همون قبلی + اسم کوتاه برای سوییچ)
     const basemapLayers = {
         carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
@@ -342,10 +355,26 @@
         currentBasemap = basemapLayers[selected];
         currentBasemap.addTo(map);
     }
+// بازگشت به کل ایران
+    function zoomToIran() {
+        map.flyTo([32.4279, 53.6880], 5, { animate: true, duration: 1.5 });
+        if (selectedLayer) {
+            geo.resetStyle(selectedLayer);
+            selectedLayer = null;
+            document.getElementById('provinceInfo').innerHTML = `
+                <div class="no-selection">
+                    <div class="icon">نقشه</div>
+                    <h3>استان مورد نظر را انتخاب کنید</h3>
+                    <p>روی هر استان در نقشه کلیک کنید</p>
+                </div>
+            `;
+        }
+    }
 </script>
 </body>
 
 </html>
+
 
 
 
