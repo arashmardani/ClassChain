@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <title>WebGIS ایران</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
@@ -155,8 +153,6 @@
 
     <script>
         const map = L.map('map').setView([32.4279, 53.6880], 5);
-        //L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
         let selectedLayer = null;
 		
         // بارگذاری مستقیم داده‌های GeoJSON
@@ -240,40 +236,10 @@
                 }).addTo(map);
 
             });
-// لایه‌های پایه مختلف (این‌ها رو می‌تونی بیشتر کنی)
-    //const basemaps = {
-    //    "استاندارد (OpenStreetMap)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    //        attribution: '&copy; OpenStreetMap contributors'
-    //    }),
-
-    //    "رنگارنگ و زیبا (CartoDB Voyager)": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    //        attribution: '&copy; OpenStreetMap &copy; CartoDB',
-    //        subdomains: 'abcd'
-    //    }),
-
-    //    "خاکستری شیک (CartoDB Positron)": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    //        attribution: '&copy; OpenStreetMap &copy; CartoDB'
-    //    }),
-
-    //    "ماهواره‌ای (Esri WorldImagery)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    //        attribution: 'Esri, Maxar, Earthstar Geographics'
-    //    }),
-
-    //    "نقشه فارسی (PersianGIS)": L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', {
-    //        attribution: '&copy; PersianGIS'
-    //    }),
-    //};
-
     // لایه پیش‌فرض رو اضافه کن (مثلاً CartoDB که خیلی سریع و زیباست)
     basemaps["رنگارنگ و زیبا (CartoDB Voyager)"].addTo(map);
 
-    // کنترلر انتخاب لایه (گوشه بالا راست)
-    //L.control.layers(basemaps, {}, {
-    //    position: 'topleft',     // یا topright, bottomleft, bottomright
-    //    collapsed: false         // در موبایل جمع بشه یا نه (true = جمع میشه)
-    //}).addTo(map);
-
-    </script>
+	</script>
 <!-- منوی آبشاری زیبا در پایین نقشه -->
 <div class="custom-basemap-selector">
     <select id="basemapSelect" onchange="changeBasemap(this.value)">
@@ -374,19 +340,3 @@
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
