@@ -251,7 +251,7 @@
     </select>
 </div>
 <!-- دکمه بازگشت به ایران با آیکون SVG حرفه‌ای -->
-<div class="home-button" onclick="zoomToIran()" title="نمایش کل ایران">
+<div class="home-button" onclick="zoomToIran()" title="ایران">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
     </svg>
@@ -294,7 +294,8 @@
 .home-button {
     position: absolute;
     top: 86px;                    /* دقیقاً زیر دکمه زوم − */
-    right: 10px;
+    left: 10px;
+	right: auto !important;       /* مطمئن می‌شه right اعمال نشه */
     z-index: 1000;
     width: 40px;
     height: 40px;
@@ -375,5 +376,6 @@
 </body>
 
 </html>
+
 
 
