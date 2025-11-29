@@ -219,25 +219,24 @@
                             `;
                         });
 						
-    // رویداد Hover – برجسته‌سازی هنگام عبور موس
-    layer.on('mouseover', function (e) {
-        // فقط اگر این استان انتخاب نشده باشد، برجسته کن
-        if (selectedLayer !== this) {
-            this.setStyle({
-                weight: 2
-            });
-        }
+					    // رویداد Hover – برجسته‌سازی هنگام عبور موس
+					    layer.on('mouseover', function (e) {
+					        // فقط اگر این استان انتخاب نشده باشد، برجسته کن
+					        if (selectedLayer !== this) {
+					            this.setStyle({
+					                weight: 4
+					            });
+   						     }
+    					    // آوردن به جلو برای دیده شدن بهتر
+   					     	this.bringToFront();
+  					  });
 
-        // آوردن به جلو برای دیده شدن بهتر
-        this.bringToFront();
-    });
-
-    // خروج موس از استان – بازگشت به حالت اولیه (اگر انتخاب نشده باشد)
-    layer.on('mouseout', function (e) {
-        if (selectedLayer !== this) {
-            geo.resetStyle(this);
-        }
-    });
+    					// خروج موس از استان – بازگشت به حالت اولیه (اگر انتخاب نشده باشد)
+					    layer.on('mouseout', function (e) {
+					        if (selectedLayer !== this) {
+					            geo.resetStyle(this);
+					        }
+    					});
                     }
 
                 }).addTo(map);
@@ -248,6 +247,7 @@
 </body>
 
 </html>
+
 
 
 
