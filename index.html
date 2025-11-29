@@ -240,11 +240,48 @@
                 }).addTo(map);
 
             });
+// لایه‌های پایه مختلف (این‌ها رو می‌تونی بیشتر کنی)
+    const basemaps = {
+        "استاندارد (OpenStreetMap)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }),
+
+        "رنگارنگ و زیبا (CartoDB Voyager)": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CartoDB',
+            subdomains: 'abcd'
+        }),
+
+        "خاکستری شیک (CartoDB Positron)": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CartoDB'
+        }),
+
+        "ماهواره‌ای (Esri WorldImagery)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri, Maxar, Earthstar Geographics'
+        }),
+
+        "نقشه فارسی (PersianGIS)": L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', {
+            attribution: '&copy; PersianGIS'
+        }),
+
+        "تیره و مدرن (Stadia Dark)": L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; Stadia Maps &copy; OpenMapTiles'
+        })
+    };
+
+    // لایه پیش‌فرض رو اضافه کن (مثلاً CartoDB که خیلی سریع و زیباست)
+    basemaps["رنگارنگ و زیبا (CartoDB Voyager)"].addTo(map);
+
+    // کنترلر انتخاب لایه (گوشه بالا راست)
+    L.control.layers(basemaps, {}, {
+        position: 'topleft',     // یا topright, bottomleft, bottomright
+        collapsed: false         // در موبایل جمع بشه یا نه (true = جمع میشه)
+    }).addTo(map);
     </script>
 
 </body>
 
 </html>
+
 
 
 
