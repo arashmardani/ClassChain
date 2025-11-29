@@ -155,7 +155,7 @@
 
     <script>
         const map = L.map('map').setView([32.4279, 53.6880], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        //L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let selectedLayer = null;
 		
@@ -241,28 +241,28 @@
 
             });
 // لایه‌های پایه مختلف (این‌ها رو می‌تونی بیشتر کنی)
-    const basemaps = {
-        "استاندارد (OpenStreetMap)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }),
+    //const basemaps = {
+    //    "استاندارد (OpenStreetMap)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //        attribution: '&copy; OpenStreetMap contributors'
+    //    }),
 
-        "رنگارنگ و زیبا (CartoDB Voyager)": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CartoDB',
-            subdomains: 'abcd'
-        }),
+    //    "رنگارنگ و زیبا (CartoDB Voyager)": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    //        attribution: '&copy; OpenStreetMap &copy; CartoDB',
+    //        subdomains: 'abcd'
+    //    }),
 
-        "خاکستری شیک (CartoDB Positron)": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CartoDB'
-        }),
+    //    "خاکستری شیک (CartoDB Positron)": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    //        attribution: '&copy; OpenStreetMap &copy; CartoDB'
+    //    }),
 
-        "ماهواره‌ای (Esri WorldImagery)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Esri, Maxar, Earthstar Geographics'
-        }),
+    //    "ماهواره‌ای (Esri WorldImagery)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    //        attribution: 'Esri, Maxar, Earthstar Geographics'
+    //    }),
 
-        "نقشه فارسی (PersianGIS)": L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', {
-            attribution: '&copy; PersianGIS'
-        }),
-    };
+    //    "نقشه فارسی (PersianGIS)": L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', {
+    //        attribution: '&copy; PersianGIS'
+    //    }),
+    //};
 
     // لایه پیش‌فرض رو اضافه کن (مثلاً CartoDB که خیلی سریع و زیباست)
     basemaps["رنگارنگ و زیبا (CartoDB Voyager)"].addTo(map);
@@ -274,10 +274,76 @@
     //}).addTo(map);
 
     </script>
+<!-- منوی آبشاری زیبا در پایین نقشه -->
+<div class="custom-basemap-selector">
+    <select id="basemapSelect" onchange="changeBasemap(this.value)">
+        <option value="carto">رنگارنگ و سریع (پیش‌فرض)</option>
+        <option value="persiangis">نقشه فارسی (PersianGIS)</option>
+        <option value="satellite">ماهواره‌ای (Esri)</option>
+        <option value="light">خاکستری روشن</option>
+        <option value="osm">استاندارد (OSM)</option>
+    </select>
+</div>
 
+<style>
+    .custom-basemap-selector {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px 20px;
+        border-radius: 30px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.4);
+        font-family: inherit;
+    }
+    #basemapSelect {
+        padding: 12px 24px;
+        font-size: 15px;
+        border: none;
+        border-radius: 25px;
+        background: transparent;
+        color: #2c3e50;
+        cursor: pointer;
+        outline: none;
+        min-width: 240px;
+        text-align: center;
+        font-weight: 500;
+    }
+    @media (max-width: 768px) {
+        .custom-basemap-selector { bottom: 15px; }
+        #basemapSelect { font-size: 14px; padding: 10px 20px; }
+    }
+</style>
+
+<script>
+    // تعریف لایه‌ها (همون قبلی + اسم کوتاه برای سوییچ)
+    const basemapLayers = {
+        carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
+        persiangis: L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', { attribution: '© PersianGIS' }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }),
+        light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
+        osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' })
+    };
+
+    // لایه پیش‌فرض
+    let currentBasemap = basemapLayers.carto;
+    currentBasemap.addTo(map);
+
+    // تابع تغییر لایه
+    function changeBasemap(selected) {
+        map.removeLayer(currentBasemap);
+        currentBasemap = basemapLayers[selected];
+        currentBasemap.addTo(map);
+    }
+</script>
 </body>
 
 </html>
+
 
 
 
