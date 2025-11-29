@@ -272,100 +272,13 @@
     //    position: 'topleft',     // یا topright, bottomleft, bottomright
     //    collapsed: false         // در موبایل جمع بشه یا نه (true = جمع میشه)
     //}).addTo(map);
-		<div class="custom-basemap-selector">
-    <select id="basemapSelect" onchange="changeBasemap(this.value)">
-        <option value="carto">رنگارنگ و سریع (پیش‌فرض)</option>
-        <option value="persiangis">نقشه فارسی (PersianGIS)</option>
-        <option value="satellite">ماهواره‌ای (Esri)</option>
-        <option value="dark">تیره و مدرن (شب)</option>
-        <option value="light">خاکستری روشن</option>
-        <option value="osm">استاندارد (OSM)</option>
-    </select>
-</div>
 
-<style>
-    .custom-basemap-selector {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 8px 16px;
-        border-radius: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.3);
-        font-family: 'Segoe UI', Tahoma, sans-serif;
-    }
-    #basemapSelect {
-        padding: 10px 20px;
-        font-size: 15px;
-        border: none;
-        border-radius: 25px;
-        background: transparent;
-        color: #2c3e50;
-        cursor: pointer;
-        outline: none;
-        min-width: 220px;
-        text-align: center;
-    }
-    #basemapSelect option {
-        text-align: right;
-        direction: rtl;
-    }
-    /* برای موبایل کمی کوچکتر */
-    @media (max-width: 768px) {
-        .custom-basemap-selector { bottom: 15px; }
-        #basemapSelect { font-size: 14px; padding: 8px 16px; }
-    }
-</style>
-
-<script>
-    // لایه‌های پایه
-    const basemapLayers = {
-        carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '© CartoDB'
-        }),
-        persiangis: L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', {
-            attribution: '© PersianGIS'
-        }),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Esri WorldImagery'
-        }),
-        dark: L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-            attribution: '© Stadia Maps'
-        }),
-        light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© CartoDB'
-        }),
-        osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        })
-    };
-
-    // لایه پیش‌فرض
-    let currentBasemap = basemapLayers.carto;
-    currentBasemap.addTo(map);
-
-    // تابع تغییر لایه
-    function changeBasemap(value) {
-        map.removeLayer(currentBasemap);
-        currentBasemap = basemapLayers[value];
-        currentBasemap.addTo(map);
-        
-        // افکت نرم (اختیاری)
-        document.querySelector('.custom-basemap-selector').style.transform = 'translateX(-50%) scale(0.95)';
-        setTimeout(() => {
-            document.querySelector('.custom-basemap-selector').style.transform = 'translateX(-50%) scale(1)';
-        }, 150);
-    }
-</script>
     </script>
 
 </body>
 
 </html>
+
 
 
 
