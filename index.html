@@ -175,6 +175,13 @@
 
                     onEachFeature: function(feature, layer) {
                         layer.on('click', function () {
+							  mouseover: function(e) {
+    							  this.setStyle({ weight: 2 });
+    							  this.bringToFront();
+  							  },
+  							  mouseout: function(e) {
+    							  if (selectedLayer !== this) geoLayer.resetStyle(this);
+  								}
                             if (selectedLayer) {
                                 geo.resetStyle(selectedLayer);
                             }
@@ -221,6 +228,7 @@
 </body>
 
 </html>
+
 
 
 
