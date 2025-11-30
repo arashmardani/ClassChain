@@ -170,39 +170,17 @@
                     },
 
                     onEachFeature: function(feature, layer) {
-// لایه حاشیه جدا
-    const borderLayer = L.geoJSON(feature, {
-        style: {
-            color: "#e67e22",
-            weight: 6,
-            fillOpacity: 0,
-            interactive: false
-        }
-    });
                         layer.on('click', function () {
-		if (selectedLayer) {
-            geo.resetStyle(selectedLayer);
-            if (selectedBorder) map.removeLayer(selectedBorder);
-        }
+                           if (selectedLayer) {
+                                geo.resetStyle(selectedLayer);
+                            }
+                            this.setStyle({
+                                weight: 2,
+                                color: "#1f4788",
+                                fillColor: "#1f4788",
+                                fillOpacity: 0.7
+                            });
 
-        // حاشیه ضخیم اضافه کن
-        selectedBorder = borderLayer.addTo(map);
-        selectedBorder.bringToFront();
-                           //if (selectedLayer) {
-                           //     geo.resetStyle(selectedLayer);
-                           // }
-                           // this.setStyle({
-                           //     weight: 2,
-                           //     color: "#1f4788",
-                           //     fillColor: "#1f4788",
-                           //     fillOpacity: 0.7
-                           // });
-		this.setStyle({
-            weight: 2,
-            color: "#3498db",
-            fillColor: "#3498db",
-            fillOpacity: 0.3       // اینجا می‌تونی 0.3–0.4 بذاری، هنوز شفافه
-        });
                             selectedLayer = this;
 					        map.fitBounds(this.getBounds(), {
             					padding: [20, 20],   // حاشیه امن
@@ -386,7 +364,6 @@
 </body>
 
 </html>
-
 
 
 
