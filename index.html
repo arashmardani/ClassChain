@@ -201,20 +201,23 @@ const map = L.map('map').setView([32.4279, 53.6880], 5);
                         });
 
                         // نمایش اطلاعات در پنل – فقط فیلدهای موجود و مهم
-                        document.getElementById('provinceInfo').innerHTML = `
+						document.getElementById('provinceInfo').innerHTML = `
                             <div class="province-info">
-                                <h3>🏛️ ${p.pname || 'نامشخص'}</h3>
-                                ${p.cname ? `<div class="info-item">
+                                <h3>استان ${p.Name || 'نامشخص'}</h3>
+                                
+                                ${p.pcenter ? `<div class="info-item">
                                     <span class="info-label">مرکز استان:</span>
-                                    <span class="info-value">${p.cname}</span>
+                                    <span class="info-value">${p.pcenter}</span>
                                 </div>` : ''}
+                                
                                 ${p.population && p.population > 0 ? `<div class="info-item">
                                     <span class="info-label">جمعیت (۱۳۹۵):</span>
                                     <span class="info-value">${Number(p.population).toLocaleString('fa-IR')}</span>
                                 </div>` : ''}
+                                
                                 <div class="info-item">
-                                    <span class="info-label">کد داخلی:</span>
-                                    <span class="info-value">${p.FID || p.OBJECTID_1}</span>
+                                    <span class="info-label">کد سیستم:</span>
+                                    <span class="info-value">${p.FID !== undefined ? p.FID : p.OBJECTID_1}</span>
                                 </div>
                             </div>
                         `;
@@ -371,4 +374,5 @@ const map = L.map('map').setView([32.4279, 53.6880], 5);
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a796ef4be7ce173',t:'MTc2NDY2MzkyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
+
 
