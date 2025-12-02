@@ -152,66 +152,73 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        const map = L.map('map').setView([32.4279, 53.6880], 5);
-        let selectedLayer = null;
-		
-        // بارگذاری مستقیم داده‌های GeoJSON
-        fetch('ir.json')
-            .then(r => r.json())
-            .then(data => {
-                const geo = L.geoJSON(data, {
-                    style: function() {
-                        return {
-                            color: "#2980b9",
-                            weight: 1,
-                            fillColor: "#3498db",
-                            fillOpacity: 0.4
-                        };
-                    },
+const map = L.map('map').setView([32.4279, 53.6880], 5);
+    let selectedLayer = null;
+    let geo; // برای دسترسی به لایه در تابع zoomToIran
 
-                    onEachFeature: function(feature, layer) {
-                        layer.on('click', function () {
-                           if (selectedLayer) {
-                                geo.resetStyle(selectedLayer);
-                            }
-                            this.setStyle({
-                                weight: 2,
-                                color: "#1f4788",
-                                fillColor: "#1f4788",
-                                fillOpacity: 0.7
-                            });
+    // تغییر نام فایل به فایل جدید
+    fetch('ir-new.json')
+        .then(r => r.json())
+        .then(data => {
+            // تبدیل Esri JSON به GeoJSON استاندارد برای Leaflet
+            const geojsonFeatures = data.features.map(f => ({
+                type: "Feature",
+                geometry: {
+                    type: "Polygon",
+                    coordinates: f.geometry.rings
+                },
+                properties: f.attributes
+            }));
 
-                            selectedLayer = this;
-					        map.fitBounds(this.getBounds(), {
-            					padding: [20, 20],   // حاشیه امن
-            					animate: true,
-            					duration: 1.5
-        					});
+            geo = L.geoJSON(geojsonFeatures, {
+                style: function() {
+                    return {
+                        color: "#2980b9",
+                        weight: 1,
+                        fillColor: "#3498db",
+                        fillOpacity: 0.4
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const p = feature.properties;
 
-                            const props = feature.properties;
-                            
-                            // نمایش اطلاعات در پنل عمودی
-                            document.getElementById('provinceInfo').innerHTML = `
-                                <div class="province-info">
-                                    <h3>${props.name}</h3>
-
-                                    <div class="info-item">
-                                        <span class="info-label">کد استان:</span>
-                                        <span class="info-value">${props.id}</span>
-                                    </div>
-
-                                    <div class="info-item">
-                                        <span class="info-label">نام:</span>
-                                        <span class="info-value">${props.name}</span>
-                                    </div>
-
-                                    <div class="info-item">
-                                        <span class="info-label">منبع:</span>
-                                        <span class="info-value">${props.source}</span>
-                                    </div>
-                                </div>
-                            `;
+                    layer.on('click', function () {
+                        if (selectedLayer) {
+                            geo.resetStyle(selectedLayer);
+                        }
+                        this.setStyle({
+                            weight: 3,
+                            color: "#1f4788",
+                            fillColor: "#e74c3c",
+                            fillOpacity: 0.7
                         });
+                        selectedLayer = this;
+
+                        map.fitBounds(this.getBounds(), {
+                            padding: [20, 20],
+                            animate: true,
+                            duration: 1.5
+                        });
+
+                        // نمایش اطلاعات در پنل – فقط فیلدهای موجود و مهم
+                        document.getElementById('provinceInfo').innerHTML = `
+                            <div class="province-info">
+                                <h3>🏛️ ${p.pname || 'نامشخص'}</h3>
+                                ${p.cname ? `<div class="info-item">
+                                    <span class="info-label">مرکز استان:</span>
+                                    <span class="info-value">${p.cname}</span>
+                                </div>` : ''}
+                                ${p.population && p.population > 0 ? `<div class="info-item">
+                                    <span class="info-label">جمعیت (۱۳۹۵):</span>
+                                    <span class="info-value">${Number(p.population).toLocaleString('fa-IR')}</span>
+                                </div>` : ''}
+                                <div class="info-item">
+                                    <span class="info-label">کد داخلی:</span>
+                                    <span class="info-value">${p.FID || p.OBJECTID_1}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
 						
 					    // رویداد Hover – برجسته‌سازی هنگام عبور موس
 					    layer.on('mouseover', function (e) {
@@ -364,3 +371,4 @@
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a796ef4be7ce173',t:'MTc2NDY2MzkyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
+
