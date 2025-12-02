@@ -242,7 +242,7 @@
         });
 
     // نمایش شهرستان‌ها
-    function showCountiesOfProvince(provinceName) {
+function showCountiesOfProvince(provinceName) {
         if (!countiesLayer) {
             fetch('counties.json')
                 .then(r => r.json())
@@ -258,32 +258,36 @@
                         features = raw.features || raw;
                     }
 
-                    let minArea = Math.min(...features.map(f => f.properties.area));
-                    let maxArea = Math.max(...features.map(f => f.properties.area));
+                    // محاسبه مین و مکس مساحت برای طیف رنگ قوی
+                    const areas = features.map(f => f.properties.area || 0).filter(a => a > 0);
+                    const minArea = Math.min(...areas);
+                    const maxArea = Math.max(...areas);
 
                     function getCountyColor(area) {
-                        if (minArea === maxArea) return "#f39c12"; // رنگ پیش‌فرض اگر همه برابر باشند
-                        let normalized = (area - minArea) / (maxArea - minArea);
-                        let r = Math.round(255 - normalized * (255 - 139));
-                        let g = Math.round(192 - normalized * 192);
-                        let b = Math.round(203 - normalized * 203);
+                        if (!area || minArea === maxArea) return "#e91e63"; // صورتی متوسط
+                        const ratio = (area - minArea) / (maxArea - minArea);
+                        // از صورتی روشن (#f8bbd0) → زرشکی خیلی تیره (#880e4f)
+                        const r = Math.round(248 + ratio * (136 - 248));
+                        const g = Math.round(187 + ratio * (14 - 187));
+                        const b = Math.round(208 + ratio * (79 - 208));
                         return `rgb(${r},${g},${b})`;
                     }
 
                     countiesLayer = L.geoJSON(features, {
                         style: function(feature) {
                             return {
-                                color: "#e67e22",
-                                weight: 2,
+                                color: "#e91e63",           // حاشیه صورتی
+                                weight: 1.5,
+                                opacity: 0.8,
                                 fillColor: getCountyColor(feature.properties.area),
-                                fillOpacity: 0.35,
-                                dashArray: "6,8"
+                                fillOpacity: 0.75,          // کاملاً قوی و واضح
+                                dashArray: ""
                             };
                         },
                         onEachFeature: (feature, layer) => {
                             const c = feature.properties;
 
-                            // برچسب دائمی نام شهرستان
+                            // برچسب نام شهرستان
                             if (c.name) {
                                 layer.bindTooltip(c.name, {
                                     permanent: true,
@@ -292,33 +296,50 @@
                                 }).openTooltip();
                             }
 
-                            // کلیک روی شهرستان — کاملاً مستقل از استان
+                            // کلیک روی شهرستان → فقط حاشیه پررنگ و قرمز بشه
                             layer.on('click', e => {
-                                L.DomEvent.stopPropagation(e); // خیلی مهم: جلوی فعال شدن کلیک استان
+                                L.DomEvent.stopPropagation(e);
 
-                                // ریست کردن شهرستان قبلی
-                                if (selectedCountyLayer) countiesLayer.resetStyle(selectedCountyLayer);
+                                // بازگرداندن حاشیه شهرستان قبلی به حالت عادی
+                                if (selectedCountyLayer && selectedCountyLayer !== layer) {
+                                    countiesLayer.resetStyle(selectedCountyLayer);
+                                }
 
-                                // برجسته کردن شهرستان کلیک‌شده
+                                // پررنگ کردن حاشیه فقط این شهرستان
                                 layer.setStyle({
-                                    weight: 4,
-                                    color: "#c0392b",
-                                    fillColor: "#e74c3c",
-                                    fillOpacity: 0.6
+                                    weight: 5,
+                                    color: "#c62828",      // قرمز تیره و قوی
+                                    fillOpacity: 0.85
                                 });
+                                layer.bringToFront();
                                 selectedCountyLayer = layer;
 
                                 map.fitBounds(layer.getBounds(), { padding: [30, 30], animate: true, duration: 1 });
 
                                 document.getElementById('provinceInfo').innerHTML = `
                                     <div class="province-info">
-                                        <h3>${c.name}</h3>
+                                        <h3>${c.name || 'نامشخص'}</h3>
                                         <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${c.pname}</span></div>
                                         ${c.ccenter_na ? `<div class="info-item"><span class="info-label">مرکز شهرستان:</span><span class="info-value">${c.ccenter_na}</span></div>` : ''}
                                         ${c.area ? `<div class="info-item"><span class="info-label">مساحت:</span><span class="info-value">${Number(c.area).toLocaleString('fa-IR')} هکتار</span></div>` : ''}
                                         ${c.perimeter ? `<div class="info-item"><span class="info-label">محیط:</span><span class="info-value">${Math.round(c.perimeter)} کیلومتر</span></div>` : ''}
                                     </div>
                                 `;
+                            });
+
+                            // هاور: کمی حاشیه پررنگ‌تر بشه
+                            layer.on('mouseover', () => {
+                                if (layer !== selectedCountyLayer) {
+                                    layer.setStyle({
+                                        weight: 3,
+                                        color: "#e91e63"
+                                    });
+                                }
+                            });
+                            layer.on('mouseout', () => {
+                                if (layer !== selectedCountyLayer) {
+                                    countiesLayer.resetStyle(layer);
+                                }
                             });
 
                             // فقط شهرستان‌های استان انتخاب‌شده نمایش داده شوند
@@ -328,17 +349,24 @@
                         }
                     });
 
-                    // دوباره فراخوانی برای نمایش فوری
+                    // نمایش فوری بعد از لود
                     showCountiesOfProvince(provinceName);
                 });
             return;
         }
 
-        // اگر قبلاً لود شده
+        // اگر لایه قبلاً ساخته شده
         let count = 0;
         countiesLayer.eachLayer(l => {
-            if (l.feature.properties.pname === provinceName) {
+            const props = l.feature.properties;
+            if (props.pname === provinceName) {
                 l.addTo(map);
+                countiesLayer.resetStyle(l); // استایل اصلی قوی اعمال بشه
+                if (l === selectedCountyLayer) {
+                    // اگر قبلاً انتخاب شده بود، دوباره حاشیه پررنگش کن
+                    l.setStyle({ weight: 5, color: "#c62828" });
+                    l.bringToFront();
+                }
                 count++;
             } else {
                 map.removeLayer(l);
@@ -388,3 +416,4 @@
 </script>
 </body>
 </html>
+
