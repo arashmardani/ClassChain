@@ -217,8 +217,8 @@
                             countiesLayer.resetStyle(selectedCountyLayer);
                             selectedCountyLayer = null;
                         }
-
-                        layer.setStyle({ weight: 5, color: "#e74c3c", fillColor: "#e74c3c", fillOpacity: 0.75 });
+                        layer.setStyle({ weight: 6, color: "#c62828", fillOpacity: 0.6 }); // فقط مرز پررنگ، رنگ داخل دست نخورده!
+                        //layer.setStyle({ weight: 5, color: "#e74c3c", fillColor: "#e74c3c", fillOpacity: 0.75 });
                         selectedLayer = layer;
 
                         map.fitBounds(layer.getBounds(), { padding: [40, 40], animate: true, duration: 1.3 });
@@ -416,4 +416,5 @@ function showCountiesOfProvince(provinceName) {
 </script>
 </body>
 </html>
+
 
