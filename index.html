@@ -184,8 +184,27 @@
                 properties: f.attributes
             }));
 
+            let minArea = Math.min(...features.map(f => f.properties.area));
+            let maxArea = Math.max(...features.map(f => f.properties.area));
+
+            function getColor(area) {
+                if (minArea === maxArea) return "#3498db"; // اگر همه مساحت‌ها برابر باشند، رنگ پیش‌فرض
+                let normalized = (area - minArea) / (maxArea - minArea);
+                let r = Math.round(173 * (1 - normalized));
+                let g = Math.round(216 * (1 - normalized));
+                let b = Math.round(230 * (1 - normalized) + 139 * normalized);
+                return `rgb(${r},${g},${b})`;
+            }
+
             geo = L.geoJSON(features, {
-                style: { color: "#2980b9", weight: 2, fillColor: "#3498db", fillOpacity: 0.5 },
+                style: function(feature) {
+                    return {
+                        color: "#2980b9",
+                        weight: 2,
+                        fillColor: getColor(feature.properties.area),
+                        fillOpacity: 0.5
+                    };
+                },
                 onEachFeature: (feature, layer) => {
                     const p = feature.properties;
 
@@ -349,4 +368,3 @@
 </script>
 </body>
 </html>
-
