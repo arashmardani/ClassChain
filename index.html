@@ -258,8 +258,28 @@
                         features = raw.features || raw;
                     }
 
+                    let minArea = Math.min(...features.map(f => f.properties.area));
+                    let maxArea = Math.max(...features.map(f => f.properties.area));
+
+                    function getCountyColor(area) {
+                        if (minArea === maxArea) return "#f39c12"; // رنگ پیش‌فرض اگر همه برابر باشند
+                        let normalized = (area - minArea) / (maxArea - minArea);
+                        let r = Math.round(255 - normalized * (255 - 139));
+                        let g = Math.round(192 - normalized * 192);
+                        let b = Math.round(203 - normalized * 203);
+                        return `rgb(${r},${g},${b})`;
+                    }
+
                     countiesLayer = L.geoJSON(features, {
-                        style: { color: "#e67e22", weight: 2, fillColor: "#f39c12", fillOpacity: 0.35, dashArray: "6,8" },
+                        style: function(feature) {
+                            return {
+                                color: "#e67e22",
+                                weight: 2,
+                                fillColor: getCountyColor(feature.properties.area),
+                                fillOpacity: 0.35,
+                                dashArray: "6,8"
+                            };
+                        },
                         onEachFeature: (feature, layer) => {
                             const c = feature.properties;
 
