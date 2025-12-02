@@ -169,7 +169,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const map = L.map('map').setView([32.4279, 53.6880], 5);
-    let selectedLayer = null;
+    let selectedLayer = null;        // استان انتخاب‌شده
+    let selectedCountyLayer = null;  // شهرستان انتخاب‌شده
     let geo;
     let countiesLayer = null;
 
@@ -188,11 +189,20 @@
                 onEachFeature: (feature, layer) => {
                     const p = feature.properties;
 
-                    layer.on('click', () => {
+                    layer.on('click', e => {
+                        L.DomEvent.stopPropagation(e); // جلوگیری از فعال شدن کلیک نقشه
+
+                        // ریست کردن انتخاب قبلی
                         if (selectedLayer) geo.resetStyle(selectedLayer);
-                        layer.setStyle({ weight: 4, color: "#e74c3c", fillColor: "#e74c3c", fillOpacity: 0.7 });
+                        if (selectedCountyLayer && map.hasLayer(selectedCountyLayer)) {
+                            countiesLayer.resetStyle(selectedCountyLayer);
+                            selectedCountyLayer = null;
+                        }
+
+                        layer.setStyle({ weight: 5, color: "#e74c3c", fillColor: "#e74c3c", fillOpacity: 0.75 });
                         selectedLayer = layer;
-                        map.fitBounds(layer.getBounds(), { padding: [30, 30], animate: true, duration: 1.2 });
+
+                        map.fitBounds(layer.getBounds(), { padding: [40, 40], animate: true, duration: 1.3 });
 
                         document.getElementById('provinceInfo').innerHTML = `
                             <div class="province-info">
@@ -220,7 +230,6 @@
                 .then(raw => {
                     let features;
                     if (raw.features?.[0]?.geometry?.rings) {
-                        // Esri JSON
                         features = raw.features.map(f => ({
                             type: "Feature",
                             geometry: { type: "Polygon", coordinates: f.geometry.rings },
@@ -234,48 +243,84 @@
                         style: { color: "#e67e22", weight: 2, fillColor: "#f39c12", fillOpacity: 0.35, dashArray: "6,8" },
                         onEachFeature: (feature, layer) => {
                             const c = feature.properties;
+
+                            // برچسب دائمی نام شهرستان
                             if (c.name) {
-                                layer.bindTooltip(c.name, { permanent: true, direction: "center", className: "county-label" }).openTooltip();
+                                layer.bindTooltip(c.name, {
+                                    permanent: true,
+                                    direction: "center",
+                                    className: "county-label"
+                                }).openTooltip();
                             }
 
+                            // کلیک روی شهرستان — کاملاً مستقل از استان
                             layer.on('click', e => {
-                                L.DomEvent.stopPropagation(e);
-                                map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+                                L.DomEvent.stopPropagation(e); // خیلی مهم: جلوی فعال شدن کلیک استان
+
+                                // ریست کردن شهرستان قبلی
+                                if (selectedCountyLayer) countiesLayer.resetStyle(selectedCountyLayer);
+
+                                // برجسته کردن شهرستان کلیک‌شده
+                                layer.setStyle({
+                                    weight: 4,
+                                    color: "#c0392b",
+                                    fillColor: "#e74c3c",
+                                    fillOpacity: 0.6
+                                });
+                                selectedCountyLayer = layer;
+
+                                map.fitBounds(layer.getBounds(), { padding: [30, 30], animate: true, duration: 1 });
+
                                 document.getElementById('provinceInfo').innerHTML = `
                                     <div class="province-info">
                                         <h3>${c.name}</h3>
                                         <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${c.pname}</span></div>
-                                        ${c.ccenter_na ? `<div class="info-item"><span class="info-label">مرکز:</span><span class="info-value">${c.ccenter_na}</span></div>` : ''}
+                                        ${c.ccenter_na ? `<div class="info-item"><span class="info-label">مرکز شهرستان:</span><span class="info-value">${c.ccenter_na}</span></div>` : ''}
                                         ${c.area ? `<div class="info-item"><span class="info-label">مساحت:</span><span class="info-value">${Number(c.area).toLocaleString('fa-IR')} هکتار</span></div>` : ''}
                                         ${c.perimeter ? `<div class="info-item"><span class="info-label">محیط:</span><span class="info-value">${Math.round(c.perimeter)} کیلومتر</span></div>` : ''}
                                     </div>
                                 `;
                             });
 
-                            if (c.pname === provinceName) layer.addTo(map);
+                            // فقط شهرستان‌های استان انتخاب‌شده نمایش داده شوند
+                            if (c.pname === provinceName) {
+                                layer.addTo(map);
+                            }
                         }
                     });
 
+                    // دوباره فراخوانی برای نمایش فوری
                     showCountiesOfProvince(provinceName);
                 });
             return;
         }
 
+        // اگر قبلاً لود شده
         let count = 0;
         countiesLayer.eachLayer(l => {
-            if (l.feature.properties.pname === provinceName) { l.addTo(map); count++; }
-            else map.removeLayer(l);
+            if (l.feature.properties.pname === provinceName) {
+                l.addTo(map);
+                count++;
+            } else {
+                map.removeLayer(l);
+            }
         });
 
-        const item = document.querySelector('#provinceInfo .info-item:last-child');
-        if (item) item.innerHTML = `<span class="info-label">تعداد شهرستان:</span><span class="info-value">${count} شهرستان</span>`;
+        // به‌روزرسانی تعداد شهرستان‌ها
+        const panel = document.getElementById('provinceInfo');
+        const item = panel.querySelector('.info-item:last-child');
+        if (item && item.querySelector('.info-label')?.textContent.includes('شهرستان')) {
+            item.innerHTML = `<span class="info-label">تعداد شهرستان:</span><span class="info-value">${count} شهرستان</span>`;
+        }
     }
 
     // بازگشت به ایران
     function zoomToIran() {
         map.flyTo([32.4279, 53.6880], 5, { animate: true, duration: 1.5 });
         if (selectedLayer) { geo.resetStyle(selectedLayer); selectedLayer = null; }
+        if (selectedCountyLayer) { countiesLayer.resetStyle(selectedCountyLayer); selectedCountyLayer = null; }
         if (countiesLayer) map.removeLayer(countiesLayer);
+
         document.getElementById('provinceInfo').innerHTML = `
             <div class="no-selection">
                 <div class="icon">نقشه</div>
@@ -304,3 +349,4 @@
 </script>
 </body>
 </html>
+
