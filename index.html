@@ -8,21 +8,29 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; }
         .container { display: flex; height: 100vh; }
-        
-        /* پنل کناری */
         .info-panel {
             width: 350px;
             background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
             color: white;
-            display: flex;
-            flex-direction: column;
+            padding: 0;
             box-shadow: -2px 0 10px rgba(0,0,0,0.3);
             z-index: 500;
+            display: flex;
+            flex-direction: column;
         }
-        .panel-header { background: rgba(0,0,0,0.3); padding: 20px; text-align: center; border-bottom: 2px solid #3498db; }
+        .panel-header {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+        }
         .panel-header h1 { font-size: 1.4em; margin-bottom: 5px; color: #ecf0f1; }
         .panel-header p { opacity: 0.9; font-size: 0.9em; color: #bdc3c7; }
-        .panel-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
         .province-info, .county-info {
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
@@ -34,18 +42,9 @@
         .info-item { display: flex; justify-content: space-between; margin: 8px 0; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .info-label { color: #bdc3c7; font-weight: bold; font-size: 0.9em; }
         .info-value { color: #ecf0f1; text-align: left; }
-
         .no-selection { text-align: center; padding: 40px 20px; color: #bdc3c7; opacity: 0.7; }
         .no-selection .icon { font-size: 3em; margin-bottom: 15px; }
-
         #map { flex: 1; height: 100vh; }
-
-        /* اسکرول بار */
-        .panel-content::-webkit-scrollbar { width: 6px; }
-        .panel-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
-        .panel-content::-webkit-scrollbar-thumb { background: #3498db; border-radius: 3px; }
-
-        /* کنترل‌های نقشه */
         .custom-control {
             position: absolute;
             z-index: 1000;
@@ -55,40 +54,12 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
             border: 1px solid rgba(255,255,255,0.4);
         }
-        .basemap-selector {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-        }
-        #basemapSelect {
-            padding: 12px 24px;
-            font-size: 15px;
-            border: none;
-            background: transparent;
-            color: #2c3e50;
-            cursor: pointer;
-            outline: none;
-            min-width: 240px;
-            text-align: center;
-            font-weight: 500;
-        }
+        .basemap-selector { bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; }
+        #basemapSelect { padding: 12px 24px; font-size: 15px; border: none; background: transparent; color: #2c3e50; cursor: pointer; outline: none; min-width: 240px; text-align: center; font-weight: 500; }
         .home-button {
-            top: 86px;
-            left: 10px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            top: 86px; left: 10px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;
         }
-        .home-button:hover {
-            background: #3498db !important;
-            transform: scale(1.15);
-        }
+        .home-button:hover { background: #3498db !important; transform: scale(1.15); }
         .home-button:hover svg { fill: white; }
     </style>
 </head>
@@ -111,7 +82,6 @@
     <div id="map"></div>
 </div>
 
-<!-- کنترل‌های نقشه -->
 <div class="custom-control basemap-selector">
     <select id="basemapSelect" onchange="changeBasemap(this.value)">
         <option value="carto">رنگارنگ (پیش‌فرض)</option>
@@ -148,7 +118,7 @@
     basemaps.carto.addTo(map);
 
     function changeBasemap(key) {
-        map.eachLayer(layer => { if (layer instanceof L.TileLayer) map.removeLayer(layer); });
+        map.eachLayer(l => { if (l instanceof L.TileLayer) map.removeLayer(l); });
         basemaps[key].addTo(map);
     }
 
@@ -179,81 +149,113 @@
             }).addTo(map);
         });
 
-    // بارگذاری شهرستان‌ها (یک بار)
+    // بارگذاری شهرستان‌ها
     fetch('counties.json')
         .then(r => r.json())
-        .then(data => { allCountiesData = data; })
-        .catch(err => console.error("خطا در بارگذاری counties.json", err));
+        .then(data => { allCountiesData = data; console.log("counties.json بارگذاری شد - تعداد:", data.features.length); })
+        .catch(err => console.error("خطا در بارگذاری counties.json:", err));
 
-function showCountiesOfProvince(provinceName) {
-    if (!allCountiesData) {
-        setTimeout(() => showCountiesOfProvince(provinceName), 500);
-        return;
+    // تابع تطبیق هوشمند نام استان
+    function matchProvinceName(provinceFromIrJson) {
+        const map = {
+            "تهران": "تهران",
+            "البرز": "البرز",
+            "گیلان": "گیلان",
+            "مازندران": "مازندران",
+            "گلستان": "گلستان",
+            "اردبیل": "اردبیل",
+            "آذربایجان شرقی": "آذربایجان شرقی",
+            "آذربایجان غربی": "آذربایجان غربی",
+            "کردستان": "کردستان",
+            "کرمانشاه": "کرمانشاه",
+            "ایلام": "ایلام",
+            "خوزستان": "خوزستان",
+            "لرستان": "لرستان",
+            "چهارمحال و بختیاری": "چهارمحال وبختیاری",
+            "کهگیلویه و بویراحمد": "کهکیلویه و بویراحمد",
+            "بوشهر": "بوشهر",
+            "فارس": "فارس",
+            "هرمزگان": "هرمزگان",
+            "سیستان و بلوچستان": "سیستان و بلوچستان",
+            "کرمان": "کرمان",
+            "یزد": "یزد",
+            "اصفهان": "اصفهان",
+            "سمنان": "سمنان",
+            "قم": "قم",
+            "مرکزی": "مرکزی",
+            "قزوین": "قزوین",
+            "زنجان": "زنجان",
+            "همدان": "همدان",
+            "خراسان رضوی": "خراسان رضوی",
+            "خراسان شمالی": "خراسان شمالی",
+            "خراسان جنوبی": "خراسان جنوبی",
+            "خراسان": "خراسان رضوی" // برای سازگاری
+        };
+        return map[provinceFromIrJson] || provinceFromIrJson;
     }
 
-    if (countiesLayer) map.removeLayer(countiesLayer);
+    function showCountiesOfProvince(provinceName) {
+        if (!allCountiesData) {
+            document.getElementById('infoPanel').innerHTML = `<div class="province-info"><h3>${provinceName}</h3><p>در حال بارگذاری شهرستان‌ها...</p></div>`;
+            setTimeout(() => showCountiesOfProvince(provinceName), 500);
+            return;
+        }
 
-    // تابع نرمال‌سازی نام استان (حذف همه فاصله‌ها و "و" و تبدیل به حروف کوچک)
-    const normalize = str => str.replace(/[\s و]+/g, '').toLowerCase();
+        if (countiesLayer) map.removeLayer(countiesLayer);
 
-    const normalizedTarget = normalize(provinceName);
+        const targetPname = matchProvinceName(provinceName);
 
-    const countyFeatures = allCountiesData.features.filter(f => {
-        const pname = f.attributes.pname || "";
-        return normalize(pname) === normalizedTarget;
-    });
-
-    if (countyFeatures.length === 0) {
-        // برای دیباگ: ببینیم چه نام‌هایی در counties.json هست
-        console.log("استان انتخاب شده:", provinceName);
-        console.log("نام‌های موجود در counties.json:", 
-            [...new Set(allCountiesData.features.map(f => f.attributes.pname))].sort()
+        const countyFeatures = allCountiesData.features.filter(f => 
+            f.attributes && f.attributes.pname === targetPname
         );
-        
+
+        console.log(`جستجو برای: "${provinceName}" → "${targetPname}" → ${countyFeatures.length} شهرستان یافت شد`);
+
+        if (countyFeatures.length === 0) {
+            document.getElementById('infoPanel').innerHTML = `
+                <div class="province-info">
+                    <h3>${provinceName}</h3>
+                    <p style="color:#e74c3c;">شهرستان یافت نشد!</p>
+                    <small>نام در counties.json: "${targetPname}"</small>
+                </div>`;
+            return;
+        }
+
+        countiesLayer = L.geoJSON(countyFeatures, {
+            style: { color: "#e67e22", weight: 2.5, fillColor: "#f39c12", fillOpacity: 0.6 },
+            onEachFeature: (feature, layer) => {
+                const a = feature.attributes;
+                const countyName = a.Name || "نامشخص";
+                const center = a.ccenter_na || "-";
+
+                layer.bindTooltip(countyName, { permanent: false, direction: "center" });
+
+                layer.on('click', () => {
+                    map.fitBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
+                    document.getElementById('infoPanel').innerHTML = `
+                        <div class="county-info">
+                            <h3>${countyName}</h3>
+                            <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${provinceName}</span></div>
+                            <div class="info-item"><span class="info-label">مرکز:</span><span class="info-value">${center}</span></div>
+                        </div>
+                    `;
+                });
+
+                layer.on('mouseover', () => layer.setStyle({ weight: 5, fillOpacity: 0.85 }).bringToFront());
+                layer.on('mouseout', () => layer.setStyle({ weight: 2.5, fillOpacity: 0.6 }));
+            }
+        }).addTo(map);
+
+        map.fitBounds(countiesLayer.getBounds(), { padding: [50, 50], duration: 1.8 });
+
         document.getElementById('infoPanel').innerHTML = `
             <div class="province-info">
-                <h3>${provinceName}</h3>
-                <p style="color:#e74c3c;">شهرستان یافت نشد!</p>
-                <small>نام استان در دو فایل متفاوت است</small>
-            </div>`;
-        return;
+                <h3>استان ${provinceName}</h3>
+                <p>تعداد شهرستان: ${countyFeatures.length} تا</p>
+                <small style="opacity:0.8;">روی هر شهرستان کلیک کنید</small>
+            </div>
+        `;
     }
-
-    countiesLayer = L.geoJSON(countyFeatures, {
-        style: { color: "#e67e22", weight: 2.5, fillColor: "#f39c12", fillOpacity: 0.6 },
-        onEachFeature: (feature, layer) => {
-            const attrs = feature.attributes;
-            const countyName = attrs.Name || "نامشخص";
-            const center = attrs.ccenter_na || "-";
-
-            layer.bindTooltip(countyName, { permanent: false, direction: "center" });
-
-            layer.on('click', () => {
-                map.fitBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
-                document.getElementById('infoPanel').innerHTML = `
-                    <div class="county-info">
-                        <h3>${countyName}</h3>
-                        <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${provinceName}</span></div>
-                        <div class="info-item"><span class="info-label">مرکز شهرستان:</span><span class="info-value">${center}</span></div>
-                    </div>
-                `;
-            });
-
-            layer.on('mouseover', () => layer.setStyle({ weight: 5, fillOpacity: 0.85 }).bringToFront());
-            layer.on('mouseout', () => layer.setStyle({ weight: 2.5, fillOpacity: 0.6 }));
-        }
-    }).addTo(map);
-
-    map.fitBounds(countiesLayer.getBounds(), { padding: [50, 50], duration: 1.8 });
-
-    document.getElementById('infoPanel').innerHTML = `
-        <div class="province-info">
-            <h3>استان ${provinceName}</h3>
-            <p>تعداد شهرستان: ${countyFeatures.length} تا</p>
-            <small style="opacity:0.8;">روی هر شهرستان کلیک کنید</small>
-        </div>
-    `;
-}
 
     function zoomToIran() {
         map.flyTo([32.4279, 53.6880], 5, { animate: true, duration: 1.5 });
@@ -271,4 +273,3 @@ function showCountiesOfProvince(provinceName) {
 </script>
 </body>
 </html>
-
