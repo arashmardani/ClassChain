@@ -66,18 +66,6 @@
         .panel-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
         .panel-content::-webkit-scrollbar-thumb { background: #3498db; border-radius: 3px; }
 
-        .county-label {
-            background: rgba(0,0,0,0.8) !important;
-            border: none !important;
-            color: white !important;
-            font-weight: bold;
-            font-size: 11px !important;
-            padding: 4px 8px !important;
-            border-radius: 4px !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            pointer-events: none;
-        }
-
         .custom-basemap-selector, .home-button {
             position: absolute;
             z-index: 1000;
@@ -132,7 +120,7 @@
     <div class="info-panel">
         <div class="panel-header">
             <h1>WebGIS ایران</h1>
-            <p>رنگ بر اساس سرانه جمعیت (هرچه روشن‌تر → سرانه بالاتر)</p>
+            <p>رنگ بر اساس سرانه جمعیت (روشن‌تر = سرانه بالاتر)</p>
         </div>
         <div class="panel-content" id="provinceInfo">
             <div class="no-selection">
@@ -169,20 +157,27 @@
     let geo;
     let countiesLayer = null;
 
-    // تابع رنگ بر اساس سرانه (هرچه بیشتر → روشن‌تر)
-    function getColorByCapita(capita, min, max) {
-        if (capita === 0 || capita == null) return '#000000'; // سیاه برای صفر
-        if (!min || !max || min === max) return '#8e44ad'; // بنفش تیره پیش‌فرض
-
-        const ratio = (capita - min) / (max - min);
-        // از آبی-بنفش تیره (کم) → سبز → زرد → سفید (زیاد)
-        const r = Math.round(50 + ratio * 205);   // 50 → 255
-        const g = Math.round(50 + ratio * 205);   // 50 → 255
-        const b = Math.round(150 + ratio * 105);  // 150 → 255
-        return `rgb(${r}, ${g}, ${b})`;
+    // رنگ استان‌ها: آبی سیر → آبی خیلی روشن
+    function getProvinceColor(capita, min, max) {
+        if (capita === 0 || capita == null) return '#34495e'; // خاکستری-آبی تیره
+        const ratio = max === min ? 0.5 : (capita - min) / (max - min);
+        const r = Math.min(255, Math.round(52 + ratio * 200));  // 52 → 252
+        const g = Math.min(255, Math.round(73 + ratio * 182));  // 73 → 255
+        const b = Math.min(255, Math.round(94 + ratio * 161));  // 94 → 255
+        return `rgb(${r}, ${g}, ${b})`; // #345e94 → #ccffff
     }
 
-    // بارگذاری استان‌ها — رنگ بر اساس P_capita
+    // رنگ شهرستان‌ها: زرشکی → صورتی خیلی ملایم + صفر → خاکستری
+    function getCountyColor(capita, min, max) {
+        if (capita === 0 || capita == null) return '#777777'; // خاکستری
+        const ratio = max === min ? 0.5 : (capita - min) / (max - min);
+        const r = Math.round(139 + ratio * 113); // 139 → 252 (زرشکی → صورتی)
+        const g = Math.round(0 + ratio * 228);   // 0 → 228
+        const b = Math.round(0 + ratio * 236);   // 0 → 236
+        return `rgb(${r}, ${g}, ${b})`; // #8b0000 → #fce4ec
+    }
+
+    // بارگذاری استان‌ها
     fetch('ir-new.json')
         .then(r => r.json())
         .then(data => {
@@ -193,8 +188,8 @@
             }));
 
             const capitas = features.map(f => f.properties.P_capita || 0).filter(c => c > 0);
-            const minCapita = Math.min(...capitas.length ? capitas : [1]);
-            const maxCapita = Math.max(...capitas.length ? capitas : [1]);
+            const minCapita = capitas.length ? Math.min(...capitas) : 1;
+            const maxCapita = capitas.length ? Math.max(...capitas) : 1;
 
             geo = L.geoJSON(features, {
                 style: feature => {
@@ -202,7 +197,7 @@
                     return {
                         color: "#2c3e50",
                         weight: 2,
-                        fillColor: getColorByCapita(capita, minCapita, maxCapita),
+                        fillColor: getProvinceColor(capita, minCapita, maxCapita),
                         fillOpacity: 0.75
                     };
                 },
@@ -211,7 +206,6 @@
 
                     layer.on('click', e => {
                         L.DomEvent.stopPropagation(e);
-
                         if (selectedLayer) geo.resetStyle(selectedLayer);
                         if (selectedCountyLayer) {
                             countiesLayer?.resetStyle(selectedCountyLayer);
@@ -229,7 +223,7 @@
                                 <h3>استان ${p.Name || 'نامشخص'}</h3>
                                 ${p.pcenter ? `<div class="info-item"><span class="info-label">مرکز استان:</span><span class="info-value">${p.pcenter}</span></div>` : ''}
                                 ${p.population > 0 ? `<div class="info-item"><span class="info-label">جمعیت (۱۳۹۵):</span><span class="info-value">${Number(p.population).toLocaleString('fa-IR')}</span></div>` : ''}
-                                ${p.P_capita ? `<div class="info-item"><span class="info-label">سرانه (P_capita):</span><span class="info-value">${Number(p.P_capita).toFixed(2)}</span></div>` : ''}
+                                ${p.P_capita ? `<div class="info-item"><span class="info-label">سرانه استانی:</span><span class="info-value">${Number(p.P_capita).toFixed(2)}</span></div>` : ''}
                                 <div class="info-item"><span class="info-label">شهرستان‌ها:</span><span class="info-value">در حال بارگذاری...</span></div>
                             </div>
                         `;
@@ -237,17 +231,13 @@
                         showCountiesOfProvince(p.Name);
                     });
 
-                    layer.on('mouseover', () => {
-                        if (selectedLayer !== layer) layer.setStyle({ weight: 5 });
-                    });
-                    layer.on('mouseout', () => {
-                        if (selectedLayer !== layer) layer.setStyle({ weight: 2 });
-                    });
+                    layer.on('mouseover', () => { if (selectedLayer !== layer) layer.setStyle({ weight: 5 }); });
+                    layer.on('mouseout', () => { if (selectedLayer !== layer) layer.setStyle({ weight: 2 }); });
                 }
             }).addTo(map);
         });
 
-    // نمایش شهرستان‌ها — رنگ بر اساس C_capita
+    // نمایش شهرستان‌ها
     function showCountiesOfProvince(provinceName) {
         if (!countiesLayer) {
             fetch('counties.json')
@@ -272,35 +262,24 @@
                         style: feature => {
                             const capita = feature.properties.C_capita || 0;
                             return {
-                                color: capita === 0 ? "#000000" : "#8e44ad",
-                                weight: capita === 0 ? 3 : 1.5,
-                                fillColor: getColorByCapita(capita, minCapita, maxCapita),
+                                color: capita === 0 ? "#555555" : "#880e4f",
+                                weight: capita === 0 ? 2.5 : 1.5,
+                                fillColor: getCountyColor(capita, minCapita, maxCapita),
                                 fillOpacity: capita === 0 ? 0.9 : 0.75
                             };
                         },
                         onEachFeature: (feature, layer) => {
                             const c = feature.properties;
 
-                            if (c.Name || c.name) {
-                                layer.bindTooltip(c.Name || c.name, {
-                                    permanent: true,
-                                    direction: "center",
-                                    className: "county-label"
-                                }).openTooltip();
-                            }
+                            // نام شهرستان نمایش داده نمی‌شود (حذف کامل شده)
 
                             layer.on('click', e => {
                                 L.DomEvent.stopPropagation(e);
-
                                 if (selectedCountyLayer && selectedCountyLayer !== layer) {
                                     countiesLayer.resetStyle(selectedCountyLayer);
                                 }
 
-                                layer.setStyle({
-                                    weight: 6,
-                                    color: "#c62828",
-                                    fillOpacity: 0.9
-                                });
+                                layer.setStyle({ weight: 6, color: "#c62828", fillOpacity: 0.9 });
                                 layer.bringToFront();
                                 selectedCountyLayer = layer;
 
@@ -309,22 +288,22 @@
                                 document.getElementById('provinceInfo').innerHTML = `
                                     <div class="province-info">
                                         <h3>${c.Name || c.name || 'نامشخص'}</h3>
-                                        <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${c.pname || c.Pname}</span></div>
+                                        <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${c.pname || c.Pname || provinceName}</span></div>
                                         ${c.ccenter_na ? `<div class="info-item"><span class="info-label">مرکز شهرستان:</span><span class="info-value">${c.ccenter_na}</span></div>` : ''}
                                         ${c.area ? `<div class="info-item"><span class="info-label">مساحت:</span><span class="info-value">${Number(c.area).toLocaleString('fa-IR')} هکتار</span></div>` : ''}
-                                        ${c.C_capita !== undefined ? `<div class="info-item"><span class="info-label">سرانه (C_capita):</span><span class="info-value">${c.C_capita === 0 ? 'ندارد (صفر)' : Number(c.C_capita).toFixed(2)}</span></div>` : ''}
+                                        ${c.C_capita !== undefined ? `<div class="info-item"><span class="info-label">سرانه شهرستانی:</span><span class="info-value">${c.C_capita === 0 ? 'صفر' : Number(c.C_capita).toFixed(2)}</span></div>` : ''}
                                     </div>
                                 `;
                             });
 
                             layer.on('mouseover', () => {
                                 if (layer !== selectedCountyLayer) {
-                                    layer.setStyle({ weight: 4, color: c.C_capita === 0 ? "#000" : "#e91e63" });
+                                    layer.setStyle({ weight: c.C_capita === 0 ? 3.5 : 3.5, color: "#e91e63" });
                                 }
                             });
                             layer.on('mouseout', () => {
                                 if (layer !== selectedCountyLayer) {
-                                    layer.setStyle({ weight: c.C_capita === 0 ? 3 : 1.5, color: c.C_capita === 0 ? "#000" : "#8e44ad" });
+                                    countiesLayer.resetStyle(layer);
                                 }
                             });
 
