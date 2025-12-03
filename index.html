@@ -161,12 +161,12 @@
     function getProvinceColor(capita, min, max) {
         if (capita === 0 || capita == null) return '#34495e'; // خاکستری-آبی تیره
         const ratio = max === min ? 0.5 : (capita - min) / (max - min);
-                const r = Math.round(173 + ratio * (30 - 173));
-                const g = Math.round(216 + ratio * (97 - 216));
-                const b = Math.round(230 + ratio * (139 - 230));
-        //const r = Math.min(255, Math.round(52 + ratio * 200));  // 52 → 252
-        //const g = Math.min(255, Math.round(73 + ratio * 182));  // 73 → 255
-        //const b = Math.min(255, Math.round(94 + ratio * 161));  // 94 → 255
+                //const r = Math.round(173 + ratio * (30 - 173));
+                //const g = Math.round(216 + ratio * (97 - 216));
+                //const b = Math.round(230 + ratio * (139 - 230));
+        const r = Math.min(255, Math.round(52 + ratio * 200));  // 52 → 252
+        const g = Math.min(255, Math.round(73 + ratio * 182));  // 73 → 255
+        const b = Math.min(255, Math.round(94 + ratio * 161));  // 94 → 255
         return `rgb(${r}, ${g}, ${b})`; // #345e94 → #ccffff
     }
 
@@ -174,13 +174,13 @@
     function getCountyColor(capita, min, max) {
         if (capita === 0 || capita == null) return '#777777'; // خاکستری
         const ratio = max === min ? 0.5 : (capita - min) / (max - min);
-        //const r = Math.round(139 + ratio * 113); // 139 → 252 (زرشکی → صورتی)
-        //const g = Math.round(0 + ratio * 228);   // 0 → 228
-        //const b = Math.round(0 + ratio * 236);   // 0 → 236
-                        const ratio = (capita - min) / (max - min);
-                        const r = Math.round(248 + ratio * (136 - 248));
-                        const g = Math.round(187 + ratio * (14 - 187));
-                        const b = Math.round(208 + ratio * (79 - 208));
+        const r = Math.round(139 + ratio * 113); // 139 → 252 (زرشکی → صورتی)
+        const g = Math.round(0 + ratio * 228);   // 0 → 228
+        const b = Math.round(0 + ratio * 236);   // 0 → 236
+        //                const ratio = (capita - min) / (max - min);
+        //                const r = Math.round(248 + ratio * (136 - 248));
+        //                const g = Math.round(187 + ratio * (14 - 187));
+        //                const b = Math.round(208 + ratio * (79 - 208));
   
         return `rgb(${r}, ${g}, ${b})`; // #8b0000 → #fce4ec
     }
@@ -383,4 +383,5 @@
 </script>
 </body>
 </html>
+
 
