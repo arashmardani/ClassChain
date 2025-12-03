@@ -179,7 +179,8 @@
                 properties: f.attributes
             }));
 
-            const areas = features.map(f => f.properties.area || 0).filter(a => a > 0);
+            //const areas = features.map(f => f.properties.area || 0).filter(a => a > 0);
+            const areas = features.map(f => f.properties.P_capita || 0).filter(a => a > 0);
             const minArea = Math.min(...areas);
             const maxArea = Math.max(...areas);
 
@@ -196,7 +197,8 @@
                 style: feature => ({
                     color: "#2980b9",
                     weight: 2,
-                    fillColor: getProvinceColor(feature.properties.area),
+                    //fillColor: getProvinceColor(feature.properties.area),
+                    fillColor: getProvinceColor(feature.properties.P_capita),
                     fillOpacity: 0.6
                 }),
                 onEachFeature: (feature, layer) => {
@@ -259,7 +261,7 @@
                         features = raw.features || raw;
                     }
 
-                    const areas = features.map(f => f.properties.area || 0).filter(a => a > 0);
+                    const areas = features.map(f => f.properties.C_capita || 0).filter(a => a > 0);
                     const minArea = Math.min(...areas);
                     const maxArea = Math.max(...areas);
 
@@ -277,7 +279,8 @@
                             color: "#e91e63",
                             weight: 1.5,
                             opacity: 0.8,
-                            fillColor: getCountyColor(feature.properties.area),
+                            //fillColor: getCountyColor(feature.properties.area),
+                            fillColor: getCountyColor(feature.properties.C_capita),
                             fillOpacity: 0.75
                         }),
                         onEachFeature: (feature, layer) => {
@@ -398,3 +401,4 @@
 </script>
 </body>
 </html>
+
