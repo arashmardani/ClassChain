@@ -282,7 +282,7 @@
         <div class="navbar-brand">کلاس‌چین</div>
         <div class="nav-links">
             <a href="../index.html">صفحه اصلی</a>
-            <a href="WebGIS.html">نقشه پروژه‌ها</a>
+            <a href="../frontend/WebGIS.html">نقشه پروژه‌ها</a>
             <a href="#">درباره ما</a>
         </div>
     </nav>
@@ -344,21 +344,29 @@
     <footer>© ۱۴۰۴ کلاس‌چین — آینده آموزش ایران را با هم بسازیم</footer>
 
     <script>
+        // Particles — حرکت خیلی کم برای حس "ثابت بودن"
         particlesJS("particles-js", {
             "particles": {
-                "number": { "value": 80 },
+                "number": { "value": 60 },
                 "color": { "value": ["#4cc9f0", "#8b5cf6", "#7209b7"] },
                 "shape": { "type": "circle" },
-                "opacity": { "value": 0.6, "random": true },
+                "opacity": { "value": 0.4, "random": true },
                 "size": { "value": 4, "random": true },
                 "line_linked": {
                     "enable": true,
-                    "distance": 160,
+                    "distance": 180,
                     "color": "#6366f1",
-                    "opacity": 0.3,
+                    "opacity": 0.2,
                     "width": 1
                 },
-                "move": { "enable": true, "speed": 1.2 }
+                "move": { 
+                    "enable": true, 
+                    "speed": 0.3,           // سرعت خیلی کم → تقریباً ثابت
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out"
+                }
             },
             "interactivity": {
                 "events": { "onhover": { "enable": true, "mode": "repulse" } }
@@ -393,14 +401,27 @@
         const projectId = urlParams.get('project');
 
         async function loadProject() {
+            if (!projectId) {
+                document.getElementById('projectName').innerText = "هیچ پروژه‌ای انتخاب نشده";
+                document.getElementById('projectDesc').innerText = "لطفاً از نقشه پروژه‌ای را انتخاب کنید.";
+                return;
+            }
+
             try {
+                // مسیر درست نسبت به donate.html (فرض بر این است که donate.html در همان سطح WebGIS.html است)
                 const response = await fetch('../data/Projects.json');
+                if (!response.ok) {
+                    throw new Error('فایل Projects.json یافت نشد');
+                }
                 const data = await response.json();
                 const feature = data.features.find(f => f.attributes.ProjectID === projectId);
+                
                 if (!feature) {
                     document.getElementById('projectName').innerText = "پروژه یافت نشد";
+                    document.getElementById('projectDesc').innerText = "کد پروژه: " + projectId;
                     return;
                 }
+                
                 projectData = feature.attributes;
 
                 document.getElementById('projectName').innerText = projectData["نام پروژه"] || "پروژه کلاس‌چین";
@@ -413,7 +434,9 @@
                 loadProgress();
                 updateContractAddress();
             } catch (err) {
-                alert("خطا در بارگذاری پروژه");
+                console.error(err);
+                document.getElementById('projectName').innerText = "خطا در بارگذاری پروژه";
+                document.getElementById('projectDesc').innerText = "لطفاً صفحه را رفرش کنید یا از نقشه دوباره وارد شوید.";
             }
         }
 
@@ -461,7 +484,7 @@
         }
 
         async function loadProgress() {
-            const target = projectData["targetAmount(USDT)"] || 1000;
+            const target = parseFloat(projectData["targetAmount(USDT)"]) || 1000;
             const raised = Math.floor(Math.random() * target * 0.4);
             const percent = (raised / target) * 100;
             document.getElementById('progressFill').style.width = percent + '%';
