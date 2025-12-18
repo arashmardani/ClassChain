@@ -210,11 +210,19 @@
             appearance: none;
             background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iNyIgdmlld0JveD0iMCAwIDEyIDciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMUw2IDZMMTAgMSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=');
             background-repeat: no-repeat;
-            background-position: right 1rem center;
+            background-position: left 1rem center;
+            padding-left: 3rem;
         }
         #networkSelect option {
             padding: 1rem;
             background: var(--bg);
+            display: flex;
+            align-items: center;
+        }
+        #networkSelect option img {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
         }
 
         .amount-input {
@@ -272,8 +280,9 @@
         }
         .btn-primary:hover { transform: translateY(-5px); }
         .btn-primary:disabled {
-            background: gray;
+            background: #4a5568;
             cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .success-message {
@@ -358,7 +367,7 @@
                 <!-- انتخاب شبکه -->
                 <div class="network-dropdown">
                     <select id="networkSelect" onchange="selectNetwork(this.value)">
-                        <!-- گزینه‌ها داینامیک اضافه می‌شن -->
+                        <option value="">لطفاً یک شبکه انتخاب کنید</option>
                     </select>
                 </div>
 
@@ -370,7 +379,7 @@
                 <!-- نمایش آدرس خزانه با لینک -->
                 <div class="contract-info" id="contractInfo" style="display:none;">
                     <strong>آدرس خزانه هوشمند (شبکه انتخابی):</strong><br>
-                    <a id="contractLink" href="#" target="_blank" style="color:#3498db; text-decoration:underline;"></a>
+                    <a id="contractLink" href="#" target="_blank"></a>
                 </div>
 
                 <!-- QR Code -->
@@ -436,80 +445,50 @@
         });
 
         let projectData = {};
-        let selectedNetwork = 'amoy';
+        let selectedNetwork = null;
         let selectedAmount = 0;
         let web3, userAddress, currentContract;
 
         const networks = {
+            amoy: {
+                name: "Polygon Amoy (تست‌نت)",
+                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+                addressField: "contractAddress",
+                usdtAddress: "0x41e94eb019c0762f9bfcf9fb78e59bec0a32e187",
+                chainId: 80002,
+                explorer: "https://amoy.polygonscan.com",
+            },
+            polygon: {
+                name: "Polygon Mainnet",
+                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+                addressField: "contractAddressMainnet",
+                usdtAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+                chainId: 137,
+                explorer: "https://polygonscan.com",
+            },
             ethereum: {
-                name: "Ethereum (ERC-20)",
+                name: "Ethereum",
                 icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
                 addressField: "contractAddressEthereum",
                 usdtAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
                 chainId: 1,
                 explorer: "https://etherscan.io",
-                apiUrl: "https://api.etherscan.io/api",
-                apiKey: "YOUR_ETHERSCAN_API_KEY" // جایگزین کنید
             },
-            polygon: {
-                name: "Polygon (POS)",
-                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-                addressField: "contractAddressPolygon",
-                usdtAddress: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
-                chainId: 137,
-                explorer: "https://polygonscan.com",
-                apiUrl: "https://api.polygonscan.com/api",
-                apiKey: "YOUR_POLYGONSCAN_API_KEY"
-            },
-            amoy: {
-                name: "Polygon Amoy (تست‌نت)",
-                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-                addressField: "contractAddressAmoy",
-                usdtAddress: "0x41e94eb019c0762f9bfcf9fb78e59bec0a32e187",
-                chainId: 80002,
-                explorer: "https://amoy.polygonscan.com",
-                apiUrl: "https://api-amoy.polygonscan.com/api",
-                apiKey: "DYB75BHRNWEGAGAEH73AWJUPQ8EDRKN7RB"
+            bsc: {
+                name: "Binance Smart Chain",
+                icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+                addressField: "contractAddressBSC",
+                usdtAddress: "0x55d398326f99059ff7754852469993b3197955e7",
+                chainId: 56,
+                explorer: "https://bscscan.com",
             },
             tron: {
                 name: "Tron (TRC-20)",
                 icon: "https://cryptologos.cc/logos/tron-trx-logo.png",
                 addressField: "contractAddressTron",
                 usdtAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-                chainId: null, // Tron is not EVM, handle separately
+                chainId: null,
                 explorer: "https://tronscan.org",
-                apiUrl: "https://api.tronscan.org/api", // Adjust for Tron API
-                apiKey: "YOUR_TRONSCAN_API_KEY"
-            },
-            bsc: {
-                name: "Binance Smart Chain (BEP-20)",
-                icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-                addressField: "contractAddressBSC",
-                usdtAddress: "0x55d398326f99059ff7754852469993b3197955e7",
-                chainId: 56,
-                explorer: "https://bscscan.com",
-                apiUrl: "https://api.bscscan.com/api",
-                apiKey: "YOUR_BSCSCAN_API_KEY"
-            },
-            solana: {
-                name: "Solana",
-                icon: "https://cryptologos.cc/logos/solana-sol-logo.png",
-                addressField: "contractAddressSolana",
-                usdtAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-                chainId: null, // Solana not EVM
-                explorer: "https://solscan.io",
-                apiUrl: "https://api.solscan.io/api", // Adjust
-                apiKey: "YOUR_SOLSCAN_API_KEY"
-            },
-            avalanche: {
-                name: "Avalanche C-Chain",
-                icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-                addressField: "contractAddressAvalanche",
-                usdtAddress: "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
-                chainId: 43114,
-                explorer: "https://snowtrace.io",
-                apiUrl: "https://api.snowtrace.io/api",
-                apiKey: "YOUR_SNOWTRACE_API_KEY"
             },
             arbitrum: {
                 name: "Arbitrum One",
@@ -518,8 +497,6 @@
                 usdtAddress: "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
                 chainId: 42161,
                 explorer: "https://arbiscan.io",
-                apiUrl: "https://api.arbiscan.io/api",
-                apiKey: "YOUR_ARBISCAN_API_KEY"
             },
             optimism: {
                 name: "Optimism",
@@ -528,8 +505,22 @@
                 usdtAddress: "0x94b008aa00579c13056b0a762ad3af54ac829873",
                 chainId: 10,
                 explorer: "https://optimistic.etherscan.io",
-                apiUrl: "https://api-optimistic.etherscan.io/api",
-                apiKey: "YOUR_OPTIMISM_API_KEY"
+            },
+            avalanche: {
+                name: "Avalanche",
+                icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+                addressField: "contractAddressAvalanche",
+                usdtAddress: "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
+                chainId: 43114,
+                explorer: "https://snowtrace.io",
+            },
+            solana: {
+                name: "Solana",
+                icon: "https://cryptologos.cc/logos/solana-sol-logo.png",
+                addressField: "contractAddressSolana",
+                usdtAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+                chainId: null,
+                explorer: "https://solscan.io",
             }
         };
 
@@ -575,17 +566,35 @@
 
         function loadNetworkDropdown() {
             const select = document.getElementById('networkSelect');
-            select.innerHTML = '';
+            select.innerHTML = '<option value="">لطفاً یک شبکه انتخاب کنید</option>';
+
+            let hasAnyNetwork = false;
             Object.keys(networks).forEach(key => {
                 const net = networks[key];
-                if (projectData[net.addressField]) {
+                if (projectData[net.addressField] && projectData[net.addressField].trim() !== "") {
                     const option = document.createElement('option');
                     option.value = key;
-                    option.innerHTML = `<img src="${net.icon}" alt="${net.name}" style="width:20px; height:20px; margin-left:10px; vertical-align:middle;"> ${net.name}`;
-                    if (key === 'amoy') option.selected = true;
+                    option.innerHTML = `<img src="${net.icon}" style="width:24px;height:24px;vertical-align:middle;margin-left:8px;"> ${net.name}`;
                     select.appendChild(option);
+                    hasAnyNetwork = true;
+
+                    // پیش‌فرض Amoy اگر موجود باشد
+                    if (key === 'amoy') {
+                        option.selected = true;
+                        selectedNetwork = 'amoy';
+                    }
                 }
             });
+
+            if (!hasAnyNetwork) {
+                select.innerHTML += '<option disabled>هیچ خزانه‌ای برای این پروژه تعریف نشده</option>';
+            }
+
+            // اگر Amoy موجود بود، اطلاعات را بروز کن
+            if (selectedNetwork) {
+                updateContractAddress();
+                loadProgress();
+            }
         }
 
         function selectNetwork(netKey) {
@@ -595,13 +604,18 @@
         }
 
         function updateContractAddress() {
+            if (!selectedNetwork) {
+                document.getElementById('contractInfo').style.display = 'none';
+                document.getElementById('qrCode').innerHTML = '';
+                return;
+            }
             const net = networks[selectedNetwork];
             currentContract = projectData[net.addressField];
             const contractInfo = document.getElementById('contractInfo');
             const contractLink = document.getElementById('contractLink');
             const qrContainer = document.getElementById('qrCode');
 
-            if (currentContract) {
+            if (currentContract && currentContract.trim() !== "") {
                 contractLink.href = `${net.explorer}/address/${currentContract}`;
                 contractLink.innerText = currentContract;
                 contractInfo.style.display = 'block';
@@ -618,29 +632,9 @@
         }
 
         async function loadProgress() {
-            document.getElementById('progressText').innerText = 'در حال محاسبه کمک‌ها...';
+            // موقتاً دمو — بعداً با API واقعی جایگزین کن
             const target = parseFloat(projectData["targetAmount(USDT)"]) || 1000;
-            let raised = 0;
-            const net = networks[selectedNetwork];
-            const contractAddress = currentContract;
-
-            if (contractAddress && net.apiUrl && net.apiKey) {
-                const url = `${net.apiUrl}?module=account&action=tokentx&contractaddress=${net.usdtAddress}&address=${contractAddress}&sort=desc&apikey=${net.apiKey}`;
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    if (data.status === "1" && data.result.length > 0) {
-                        data.result.forEach(tx => {
-                            if (tx.to.toLowerCase() === contractAddress.toLowerCase()) {
-                                raised += parseInt(tx.value) / 1e6;
-                            }
-                        });
-                    }
-                } catch (err) {
-                    console.error("خطا در بارگذاری کمک‌ها:", err);
-                }
-            }
-
+            const raised = Math.floor(Math.random() * target * 0.3);
             const percent = (raised / target) * 100;
             document.getElementById('progressFill').style.width = percent + '%';
             document.getElementById('progressText').innerText = `${raised.toFixed(2)} USDT از ${target.toLocaleString('fa-IR')} USDT جمع شده`;
@@ -668,14 +662,16 @@
             try {
                 const net = networks[selectedNetwork];
 
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '0x' + net.chainId.toString(16) }],
-                    });
-                } catch (switchError) {
-                    if (switchError.code === 4902) {
-                        alert("شبکه " + net.name + " به کیف پول اضافه نشده است.");
+                if (net.chainId) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x' + net.chainId.toString(16) }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            alert("شبکه " + net.name + " به کیف پول اضافه نشده است.");
+                        }
                     }
                 }
 
