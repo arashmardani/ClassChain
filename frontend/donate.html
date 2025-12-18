@@ -163,12 +163,12 @@
 
         .network-selection {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1rem;
             margin: 2rem 0;
         }
         .network-card {
-            padding: 1.2rem;
+            padding: 1.5rem;
             background: rgba(30,41,59,0.6);
             border-radius: 12px;
             cursor: pointer;
@@ -181,41 +181,27 @@
             background: rgba(139,92,246,0.2);
         }
         .network-card img {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 0.8rem;
+            width: 50px;
+            height: 50px;
+            margin-bottom: 1rem;
         }
 
-        .amount-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
+        .amount-input {
             margin: 2rem 0;
         }
-        .amount-btn {
-            padding: 1rem 2rem;
-            background: rgba(100,116,139,0.4);
-            border: none;
-            border-radius: 50px;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .amount-btn:hover, .amount-btn.selected {
-            background: var(--primary);
-            transform: scale(1.05);
-        }
         input#customAmount {
-            padding: 1rem;
-            width: 200px;
+            padding: 1.2rem;
+            width: 300px;
+            max-width: 100%;
             background: rgba(30,41,59,0.8);
             border: none;
             border-radius: 12px;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             text-align: center;
+        }
+        input#customAmount::placeholder {
+            color: #94a3b8;
         }
 
         .btn-primary {
@@ -226,13 +212,22 @@
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            margin: 1.5rem;
+            margin: 1.5rem 0;
             box-shadow: 0 10px 30px rgba(16,185,129,0.4);
         }
         .btn-primary:hover { transform: translateY(-5px); }
 
+        .contract-info {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: rgba(30,41,59,0.6);
+            border-radius: 12px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
         #qrCode { margin: 2rem 0; }
-        #contractAddress { word-break: break-all; font-family: monospace; font-size: 0.9em; }
 
         .success-message {
             display: none;
@@ -306,25 +301,24 @@
                 <strong>تعهدات شما:</strong> با ارسال کمک، تأیید می‌کنید که این مبلغ به صورت داوطلبانه و برای ساخت مدرسه اهدا شده است. تمام تراکنش‌ها روی بلاکچین قابل ردیابی هستند.
             </div>
 
+            <!-- انتخاب شبکه -->
             <div class="network-selection" id="networkSelection"></div>
 
-            <div class="amount-buttons" id="amountButtons">
-                <button class="amount-btn" data-amount="10">۱۰ USDT</button>
-                <button class="amount-btn" data-amount="25">۲۵ USDT</button>
-                <button class="amount-btn" data-amount="50">۵۰ USDT</button>
-                <button class="amount-btn" data-amount="100">۱۰۰ USDT</button>
-                <button class="amount-btn" data-amount="200">۲۰۰ USDT</button>
-                <input type="number" id="customAmount" placeholder="مقدار دلخواه (USDT)" min="1">
+            <!-- مبلغ اختیاری -->
+            <div class="amount-input">
+                <input type="number" id="customAmount" placeholder="مقدار کمک خود را به USDT وارد کنید" min="1" step="0.01">
             </div>
+
+            <!-- نمایش آدرس خزانه -->
+            <div class="contract-info" id="contractInfo" style="display:none;">
+                <strong>آدرس خزانه هوشمند (شبکه انتخابی):</strong><br>
+                <span id="contractAddress"></span>
+            </div>
+
+            <!-- QR Code -->
+            <div id="qrCode"></div>
 
             <button class="btn-primary" id="connectBtn">اتصال کیف پول و پرداخت</button>
-
-            <div id="manualSection" style="display:none; margin-top: 2rem;">
-                <p>یا مستقیم به آدرس زیر ارسال کنید (شبکه انتخابی):</p>
-                <div id="qrCode"></div>
-                <p id="contractAddress"></p>
-                <button onclick="copyAddress()" style="padding:0.8rem 1.5rem; margin-top:1rem;">کپی آدرس</button>
-            </div>
 
             <div class="success-message" id="successMessage">
                 <h3>✅ کمک شما با موفقیت ارسال شد!</h3>
@@ -344,7 +338,7 @@
     <footer>© ۱۴۰۴ کلاس‌چین — آینده آموزش ایران را با هم بسازیم</footer>
 
     <script>
-        // Particles — کاملاً ثابت (بدون حرکت)
+        // Particles — کاملاً ثابت
         particlesJS("particles-js", {
             "particles": {
                 "number": { "value": 60 },
@@ -359,9 +353,7 @@
                     "opacity": 0.2,
                     "width": 1
                 },
-                "move": { 
-                    "enable": false  // حرکت ذرات خاموش شد
-                }
+                "move": { "enable": false }
             },
             "interactivity": {
                 "events": { "onhover": { "enable": true, "mode": "repulse" } }
@@ -370,7 +362,7 @@
 
         let projectData = {};
         let selectedNetwork = 'amoy';
-        let selectedAmount = 10;
+        let selectedAmount = 0;
         let web3, userAddress, currentContract;
 
         const networks = {
@@ -403,11 +395,8 @@
             }
 
             try {
-                // مسیر مطلق برای GitHub Pages
-                const response = await fetch('data/Projects.json');
-                if (!response.ok) {
-                    throw new Error('فایل Projects.json یافت نشد');
-                }
+                const response = await fetch('https://arashmardani.github.io/ClassChain/data/Projects.json');
+                if (!response.ok) throw new Error('فایل Projects.json یافت نشد');
                 const data = await response.json();
                 const feature = data.features.find(f => f.attributes.ProjectID === projectId);
                 
@@ -427,11 +416,11 @@
 
                 loadNetworks();
                 loadProgress();
-                updateContractAddress();
+                updateContractAddress(); // نمایش آدرس خزانه
             } catch (err) {
                 console.error(err);
                 document.getElementById('projectName').innerText = "خطا در بارگذاری پروژه";
-                document.getElementById('projectDesc').innerText = "لطفاً صفحه را رفرش کنید یا از نقشه دوباره وارد شوید.";
+                document.getElementById('projectDesc').innerText = "ممکن است مسیر فایل JSON اشتباه باشد.";
             }
         }
 
@@ -464,17 +453,22 @@
         function updateContractAddress() {
             const net = networks[selectedNetwork];
             currentContract = projectData[net.addressField];
+            const contractInfo = document.getElementById('contractInfo');
+            const contractAddressEl = document.getElementById('contractAddress');
+            const qrContainer = document.getElementById('qrCode');
+
             if (currentContract) {
-                document.getElementById('contractAddress').innerText = currentContract;
-                document.getElementById('manualSection').style.display = 'block';
-                document.getElementById('qrCode').innerHTML = '';
-                new QRCode(document.getElementById("qrCode"), {
+                contractAddressEl.innerText = currentContract;
+                contractInfo.style.display = 'block';
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
                     text: currentContract,
-                    width: 200,
-                    height: 200
+                    width: 220,
+                    height: 220
                 });
             } else {
-                document.getElementById('manualSection').style.display = 'none';
+                contractInfo.style.display = 'none';
+                qrContainer.innerHTML = '';
             }
         }
 
@@ -486,17 +480,8 @@
             document.getElementById('progressText').innerText = `${raised.toLocaleString('fa-IR')} USDT از ${target.toLocaleString('fa-IR')} USDT جمع شده`;
         }
 
-        document.querySelectorAll('.amount-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedAmount = parseFloat(btn.dataset.amount);
-                document.getElementById('customAmount').value = '';
-            };
-        });
         document.getElementById('customAmount').oninput = (e) => {
             selectedAmount = parseFloat(e.target.value) || 0;
-            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
         };
 
         document.getElementById('connectBtn').onclick = async () => {
@@ -543,7 +528,6 @@
                 document.getElementById('txHash').innerHTML = `تراکنش با موفقیت ارسال شد!<br><a href="${explorerLink}" target="_blank">مشاهده در اکسپلورر</a>`;
                 document.getElementById('successMessage').style.display = 'block';
                 document.getElementById('connectBtn').style.display = 'none';
-                document.getElementById('manualSection').style.display = 'none';
 
                 loadProgress();
             } catch (err) {
@@ -554,11 +538,6 @@
                 }
             }
         };
-
-        function copyAddress() {
-            navigator.clipboard.writeText(currentContract);
-            alert("آدرس با موفقیت کپی شد!");
-        }
 
         function saveEmail() {
             const email = document.getElementById('donorEmail').value.trim();
