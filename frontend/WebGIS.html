@@ -2,22 +2,25 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>WebGIS ایران - بر اساس سرانه جمعیت</title>
+    <title>WebGIS ایران - بر اساس سرانه جمعیت + پروژه‌های آموزشی</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; }
         .container { display: flex; height: 100vh; }
-        
-        .info-panel {
-            width: 350px;
-            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.3);
-            z-index: 500;
-        }
+
+		.info-panel {
+    		width: 350px;
+    		background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    		color: white;
+    		display: flex;
+    		flex-direction: column;
+    		box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+    		z-index: 500;
+    		position: relative; /* ← اضافه شد */
+			height: 100%; /* مطمئن شو که این وجود داره */
+		}
         .panel-header {
             background: rgba(0,0,0,0.3);
             padding: 20px;
@@ -27,14 +30,15 @@
         .panel-header h1 { font-size: 1.4em; margin-bottom: 5px; color: #ecf0f1; }
         .panel-header p { opacity: 0.9; font-size: 0.9em; color: #bdc3c7; }
         .panel-content { flex: 1; padding: 20px; overflow-y: auto; }
-        .province-info {
+        .province-info, .project-info {
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 15px;
             border-right: 4px solid #3498db;
         }
-        .province-info h3 {
+		
+        .province-info h3, .project-info h3 {
             color: #ecf0f1;
             margin-bottom: 10px;
             font-size: 1.3em;
@@ -52,6 +56,13 @@
         .info-label { font-weight: bold; color: #bdc3c7; }
         .info-value { color: #ecf0f1; text-align: left; }
 
+        /* اضافه شده برای حل مشکل بیرون‌زدگی آدرس قرارداد */
+        .contract-address {
+            word-break: break-all;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
         .no-selection {
             text-align: center;
             padding: 40px 20px;
@@ -65,7 +76,52 @@
         .panel-content::-webkit-scrollbar { width: 6px; }
         .panel-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
         .panel-content::-webkit-scrollbar-thumb { background: #3498db; border-radius: 3px; }
+		.panel-content {
+    		flex: 1 1 Auto;
+    		padding: 20px /* 20px 140px 20px;  /* پایین رو بیشتر کردیم تا فضای کافی برای دکمه + حاشیه باشه */
+    		overflow-y: auto;
+			padding: 20px;
+		}
+		.fixed-contribute-button {
+    		position: sticky;          /* نسبت به info-panel */
+    		bottom: 15px;
+    		left: 15px;
+    		right: 15px;
+    		text-align: center;
+    		background: rgba(39, 174, 96, 0.98);
+    		padding: 18px 15px;
+    		border-radius: 12px;
+    		box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    		backdrop-filter: blur(12px);
+    		z-index: 20;
+    		border: 1px solid rgba(255,255,255,0.15);
+    		display: none;               /* ← اضافه شد */
+		}
+		
+		.fixed-contribute-button button {
+    		padding: 14px 28px;
+    		background: #27ae60;
+    		color: white;
+    		border: none;
+    		border-radius: 10px;
+    		font-size: 1.15em;
+    		font-weight: bold;
+    		cursor: pointer;
+    		width: 100%;
+    		box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    		transition: transform 0.2s ease;
+		}
+		
+		.fixed-contribute-button button:hover {
+    		transform: translateY(-2px);
+		}
 
+		.fixed-contribute-button p {
+    		margin-top: 10px;
+    		font-size: 0.9em;
+    		opacity: 0.9;
+		}
+		
         .custom-basemap-selector, .home-button {
             position: absolute;
             z-index: 1000;
@@ -93,8 +149,7 @@
             cursor: pointer;
             outline: none;
             min-width: 240px;
-            text-align: center;
-            font-weight: 500;
+            text-align: font-weight: 500;
         }
         .home-button {
             top: 86px;
@@ -107,78 +162,148 @@
             justify-content: center;
             cursor: pointer;
         }
-        .home-button:hover {
-            background: #3498db;
-            transform: scale(1.1);
-        }
+        .home-button:hover { background: #3498db; transform: scale(1.1); }
         .home-button:hover svg { fill: white; }
     </style>
 </head>
 <body>
+	<div class="container">
+    	<div class="info-panel">
+        	<div class="panel-header">
+            	<h1>WebGIS ایران</h1>
+            	<p>رنگ بر اساس سرانه جمعیت + پروژه‌های آموزشی</p>
+        	</div>
+        	<div class="panel-content" id="infoPanel">
+				<div class="fixed-contribute-button" id="fixedContributeBtn">
+    				<button onclick="redirectToDonate(currentProjectId)">
+			    	    مشارکت در ساخت
+    				</button>
+    				<p>(انتخاب شبکه و پرداخت با کیف پول)</p>
+				</div>
+            	<div class="no-selection">
+            		<div class="icon">Map</div>
+            		<h3>یک مورد را انتخاب کنید</h3>
+            		<p>روی استان، شهرستان یا پروژه کلیک کنید</p>
+           		</div>
+        	</div>
+    	</div>
+    	<div id="map"></div>
+	</div>
 
-<div class="container">
-    <div class="info-panel">
-        <div class="panel-header">
-            <h1>WebGIS ایران</h1>
-            <p>رنگ بر اساس سرانه جمعیت (روشن‌تر = سرانه بالاتر)</p>
-        </div>
-        <div class="panel-content" id="provinceInfo">
-            <div class="no-selection">
-                <div class="icon">نقشه</div>
-                <h3>استان مورد نظر را انتخاب کنید</h3>
-                <p>روی هر استان کلیک کنید</p>
-            </div>
-        </div>
-    </div>
-    <div id="map"></div>
-</div>
+	<div class="custom-basemap-selector">
+    	<select id="basemapSelect" onchange="changeBasemap(this.value)">
+        	<option value="carto">رنگارنگ و سریع (پیش‌فرض)</option>
+        	<option value="persiangis">نقشه فارسی (PersianGIS)</option>
+        	<option value="satellite">ماهواره‌ای (Esri)</option>
+        	<option value="light">خاکستری روشن</option>
+        	<option value="osm">استاندارد (OSM)</option>
+    	</select>
+	</div>
 
-<div class="custom-basemap-selector">
-    <select id="basemapSelect" onchange="changeBasemap(this.value)">
-        <option value="carto">رنگارنگ و سریع (پیش‌فرض)</option>
-        <option value="persiangis">نقشه فارسی (PersianGIS)</option>
-        <option value="satellite">ماهواره‌ای (Esri)</option>
-        <option value="light">خاکستری روشن</option>
-        <option value="osm">استاندارد (OSM)</option>
-    </select>
-</div>
-
-<div class="home-button" onclick="zoomToIran()" title="بازگشت به ایران">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-    </svg>
-</div>
-
+	<div class="home-button" onclick="zoomToIran()" title="بازگشت به ایران">
+    	<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        	<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    	</svg>
+	</div>
+	
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
 <script>
-    const map = L.map('map').setView([32.4279, 53.6880], 5);
+let currentContractAddress = null;
+let currentProjectId = null;
+const map = L.map('map', {
+        renderer: L.canvas()
+    }).setView([32.4279, 53.6880], 5);
+    
     let selectedLayer = null;
     let selectedCountyLayer = null;
-    let geo;
-    let countiesLayer = null;
+    let selectedProjectMarker = null;
+    let geo, countiesLayer = null, projectsLayer = null;
 
-    // رنگ استان‌ها: آبی سیر → آبی خیلی روشن
+    // تابع نمایش اطلاعات در پنل
+    function showInPanel(content) {
+        document.getElementById('infoPanel').innerHTML = content;
+    }
+    // رنگ استان‌ها
     function getProvinceColor(capita, min, max) {
-        if (capita === 0 || capita == null) return '#34495e'; // خاکستری-آبی تیره
+        if (capita === 0 || capita == null) return '#34495e';
         const ratio = max === min ? 0.5 : (capita - min) / (max - min);
-        const r = Math.min(255, Math.round(52 + ratio * 200));  // 52 → 252
-        const g = Math.min(255, Math.round(73 + ratio * 182));  // 73 → 255
-        const b = Math.min(255, Math.round(94 + ratio * 161));  // 94 → 255
-        return `rgb(${r}, ${g}, ${b})`; // #345e94 → #ccffff
+        const r = Math.min(255, Math.round(52 + ratio * 200));
+        const g = Math.min(255, Math.round(73 + ratio * 182));
+        const b = Math.min(255, Math.round(94 + ratio * 161));
+        return `rgb(${r},${g},${b})`;
     }
 
-    // رنگ شهرستان‌ها: زرشکی → صورتی خیلی ملایم + صفر → خاکستری
     function getCountyColor(capita, min, max) {
-        if (capita === 0 || capita == null) return '#777777'; // خاکستری
+        if (capita === 0 || capita == null) return '#777777';
         const ratio = max === min ? 0.5 : (capita - min) / (max - min);
-        const r = Math.round(139 + ratio * 113); // 139 → 252 (زرشکی → صورتی)
-        const g = Math.round(0 + ratio * 228);   // 0 → 228
-        const b = Math.round(0 + ratio * 236);   // 0 → 236
-        return `rgb(${r}, ${g}, ${b})`; // #8b0000 → #fce4ec
+        const r = Math.round(139 + ratio * 113);
+        const g = Math.round(0 + ratio * 228);
+        const b = Math.round(0 + ratio * 236);
+        return `rgb(${r},${g},${b})`;
     }
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// آیکون‌های پروژه
+    const normalIcon = L.divIcon({
+        html: `<div style="background:#e74c3c; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 8px rgba(0,0,0,0.7);"></div>`,
+        className: 'custom-div-icon',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+    
+const selectedIcon = L.divIcon({
+        html: `<div style="background:#f1c40f; width:20px; height:20px; border-radius:50%; border:4px solid white; box-shadow:0 0 12px rgba(241,196,15,0.8); animation:pulse 1.5s infinite;"></div>`,
+        className: 'custom-div-icon',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+    });
+const projectIcon = L.divIcon({
+        html: `<div style="background:#e74c3c; width:10px; height:10px; border-radius:50%; border:2px solid white; box-shadow:0 0 6px rgba(0,0,0,0.8);"></div>`,
+        className: 'custom-project-marker',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
 
+    const selectedProjectIcon = L.divIcon({
+        html: `<div style="background:#f1c40f; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 12px #f1c40f;"></div>`,
+        className: 'custom-project-marker',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+
+    // ایجاد خوشه مارکرها (این دقیقاً همان چیزی است که در وب‌جی‌آی‌اس‌های حرفه‌ای می‌بینی)
+    const markersCluster = L.markerClusterGroup({
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        maxClusterRadius: 60, // در زوم کم خوشه‌های بزرگ‌تر
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let size = count < 10 ? 40 : count < 100 ? 50 : 60;
+            return L.divIcon({
+                html: `<div style="background:#e74c3c;color:white;font-weight:bold;border-radius:50%;width:${size}px;height:${size}px;line-height:${size}px;text-align:center;box-shadow:0 0 12px rgba(0,0,0,0.6);font-size:14px;">${count}</div>`,
+                className: '',
+                iconSize: [size, size]
+            });
+        }
+    });
+
+// اضافه کردن انیمیشن پالس
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(241,196,15,0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(241,196,15,0); }
+            100% { box-shadow: 0 0 0 0 rgba(241,196,15,0); }
+        }
+    `;
+    document.head.appendChild(style);
+    
     // بارگذاری استان‌ها
-    fetch('ir-new.json')
+    fetch('data/ir-new.json')
         .then(r => r.json())
         .then(data => {
             const features = data.features.map(f => ({
@@ -187,176 +312,257 @@
                 properties: f.attributes
             }));
 
-            const capitas = features.map(f => f.properties.P_capita || 0).filter(c => c > 0);
-            const minCapita = capitas.length ? Math.min(...capitas) : 1;
-            const maxCapita = capitas.length ? Math.max(...capitas) : 1;
+            const capitas = features.map(f => f.properties.capita || 0).filter(c => c > 0);
+            const minCapita = Math.min(...capitas) || 0;
+            const maxCapita = Math.max(...capitas) || 1;
 
-            geo = L.geoJSON(features, {
-                style: feature => {
-                    const capita = feature.properties.P_capita || 0;
+            geo = L.geoJSON({ type: "FeatureCollection", features }, {
+                style: function(feature) {
                     return {
-                        color: "#2c3e50",
-                        weight: 2,
-                        fillColor: getProvinceColor(capita, minCapita, maxCapita),
-                        fillOpacity: 0.75
+                        fillColor: getProvinceColor(feature.properties.capita, minCapita, maxCapita),
+                        weight: 1.5,
+                        opacity: 0.9,
+                        color: '#bdc3c7',
+                        dashArray: '3',
+                        fillOpacity: 0.7
                     };
                 },
-                onEachFeature: (feature, layer) => {
-                    const p = feature.properties;
+                onEachFeature: function(feature, layer) {
+                    layer.on({
+                        mouseover: e => e.target.setStyle({ fillOpacity: 0.9 }),
+                        mouseout: e => geo.resetStyle(e.target),
+                        click: async function(e) {
+                            if (selectedLayer) geo.resetStyle(selectedLayer);
+                            selectedLayer = layer;
+                            layer.setStyle({ fillOpacity: 0.9 });
 
-                    layer.on('click', e => {
-                        L.DomEvent.stopPropagation(e);
-                        if (selectedLayer) geo.resetStyle(selectedLayer);
-                        if (selectedCountyLayer) {
-                            countiesLayer?.resetStyle(selectedCountyLayer);
-                            selectedCountyLayer = null;
-                        }
+                            if (countiesLayer) map.removeLayer(countiesLayer);
+                            countiesLayer = null;
 
-                        layer.setStyle({ weight: 6, color: "#e74c3c", fillOpacity: 0.9 });
-                        selectedLayer = layer;
-                        layer.bringToFront();
+                            if (selectedCountyLayer) selectedCountyLayer = null;
+                            if (selectedProjectMarker) {
+                                selectedProjectMarker.setIcon(projectIcon);
+                                selectedProjectMarker = null;
+                            }
+                            const fixedBtn = document.getElementById('fixedContributeBtn');
+                            if (fixedBtn) fixedBtn.style.display = 'none';
+                            currentProjectId = null;
 
-                        map.fitBounds(layer.getBounds(), { padding: [40, 40], animate: true, duration: 1.3 });
+                            const province = feature.properties.name || 'نامشخص';
+                            const capita = feature.properties.capita || 'نامشخص';
+                            const population = feature.properties.population || 'نامشخص';
+                            const area = feature.properties.area || 'نامشخص';
+                            const schools = feature.properties.schools || 'نامشخص';
+                            const students = feature.properties.students || 'نامشخص';
 
-                        document.getElementById('provinceInfo').innerHTML = `
-                            <div class="province-info">
-                                <h3>استان ${p.Name || 'نامشخص'}</h3>
-                                ${p.pcenter ? `<div class="info-item"><span class="info-label">مرکز استان:</span><span class="info-value">${p.pcenter}</span></div>` : ''}
-                                ${p.population > 0 ? `<div class="info-item"><span class="info-label">جمعیت (۱۳۹۵):</span><span class="info-value">${Number(p.population).toLocaleString('fa-IR')}</span></div>` : ''}
-                                ${p.P_capita ? `<div class="info-item"><span class="info-label">سرانه استانی:</span><span class="info-value">${Number(p.P_capita).toFixed(2)}</span></div>` : ''}
-                                <div class="info-item"><span class="info-label">شهرستان‌ها:</span><span class="info-value">در حال بارگذاری...</span></div>
-                            </div>
-                        `;
+                            showInPanel(`
+                                <div class="province-info">
+                                    <h3>${province}</h3>
+                                    <div class="info-item"><span class="info-label">سرانه جمعیت:</span><span class="info-value">${capita}</span></div>
+                                    <div class="info-item"><span class="info-label">جمعیت:</span><span class="info-value">${population.toLocaleString('fa-IR')}</span></div>
+                                    <div class="info-item"><span class="info-label">مساحت (km²):</span><span class="info-value">${area.toLocaleString('fa-IR')}</span></div>
+                                    <div class="info-item"><span class="info-label">تعداد مدارس:</span><span class="info-value">${schools.toLocaleString('fa-IR')}</span></div>
+                                    <div class="info-item"><span class="info-label">تعداد دانش‌آموزان:</span><span class="info-value">${students.toLocaleString('fa-IR')}</span></div>
+                                </div>
+                            `);
 
-                        showCountiesOfProvince(p.Name);
-                    });
+                            map.fitBounds(layer.getBounds());
 
-                    layer.on('mouseover', () => { if (selectedLayer !== layer) layer.setStyle({ weight: 5 }); });
-                    layer.on('mouseout', () => { if (selectedLayer !== layer) layer.setStyle({ weight: 2 }); });
-                }
-            }).addTo(map);
-        });
+                            // بارگذاری شهرستان‌ها
+                            try {
+                                const countiesRes = await fetch('data/counties.json');
+                                const countiesData = await countiesRes.json();
+                                const countyFeatures = countiesData.features
+                                    .filter(f => f.properties.province_id === feature.properties.province_id)
+                                    .map(f => ({
+                                        type: "Feature",
+                                        geometry: f.geometry,
+                                        properties: f.properties
+                                    }));
 
-    // نمایش شهرستان‌ها
-    function showCountiesOfProvince(provinceName) {
-        if (!countiesLayer) {
-            fetch('counties.json')
-                .then(r => r.json())
-                .then(raw => {
-                    let features;
-                    if (raw.features?.[0]?.geometry?.rings) {
-                        features = raw.features.map(f => ({
-                            type: "Feature",
-                            geometry: { type: "Polygon", coordinates: f.geometry.rings },
-                            properties: f.attributes
-                        }));
-                    } else {
-                        features = raw.features || raw;
-                    }
+                                const countyCapitas = countyFeatures.map(f => f.properties.capita || 0).filter(c => c > 0);
+                                const minCounty = Math.min(...countyCapitas) || 0;
+                                const maxCounty = Math.max(...countyCapitas) || 1;
 
-                    const capitas = features.map(f => f.properties.C_capita || 0).filter(c => c > 0);
-                    const minCapita = capitas.length ? Math.min(...capitas) : 1;
-                    const maxCapita = capitas.length ? Math.max(...capitas) : 1;
+                                countiesLayer = L.geoJSON({ type: "FeatureCollection", features: countyFeatures }, {
+                                    style: function(feature) {
+                                        return {
+                                            fillColor: getCountyColor(feature.properties.capita, minCounty, maxCounty),
+                                            weight: 1,
+                                            opacity: 0.8,
+                                            color: '#ecf0f1',
+                                            fillOpacity: 0.6
+                                        };
+                                    },
+                                    onEachFeature: function(feature, layer) {
+                                        layer.on({
+                                            mouseover: e => e.target.setStyle({ fillOpacity: 0.9 }),
+                                            mouseout: e => countiesLayer.resetStyle(e.target),
+                                            click: function(e) {
+                                                if (selectedCountyLayer) countiesLayer.resetStyle(selectedCountyLayer);
+                                                selectedCountyLayer = layer;
+                                                layer.setStyle({ fillOpacity: 0.9 });
 
-                    countiesLayer = L.geoJSON(features, {
-                        style: feature => {
-                            const capita = feature.properties.C_capita || 0;
-                            return {
-                                color: capita === 0 ? "#555555" : "#880e4f",
-                                weight: capita === 0 ? 2.5 : 1.5,
-                                fillColor: getCountyColor(capita, minCapita, maxCapita),
-                                fillOpacity: capita === 0 ? 0.9 : 0.75
-                            };
-                        },
-                        onEachFeature: (feature, layer) => {
-                            const c = feature.properties;
+                                                if (selectedProjectMarker) {
+                                                    selectedProjectMarker.setIcon(projectIcon);
+                                                    selectedProjectMarker = null;
+                                                }
+                                                const fixedBtn = document.getElementById('fixedContributeBtn');
+                                                if (fixedBtn) fixedBtn.style.display = 'none';
+                                                currentProjectId = null;
 
-                            // نام شهرستان نمایش داده نمی‌شود (حذف کامل شده)
+                                                const county = feature.properties.name || 'نامشخص';
+                                                const countyCapita = feature.properties.capita || 'نامشخص';
+                                                const countyPop = feature.properties.population || 'نامشخص';
 
-                            layer.on('click', e => {
-                                L.DomEvent.stopPropagation(e);
-                                if (selectedCountyLayer && selectedCountyLayer !== layer) {
-                                    countiesLayer.resetStyle(selectedCountyLayer);
-                                }
+                                                showInPanel(`
+                                                    <div class="province-info">
+                                                        <h3>${county} (${province})</h3>
+                                                        <div class="info-item"><span class="info-label">سرانه جمعیت:</span><span class="info-value">${countyCapita}</span></div>
+                                                        <div class="info-item"><span class="info-label">جمعیت:</span><span class="info-value">${countyPop.toLocaleString('fa-IR')}</span></div>
+                                                    </div>
+                                                `);
 
-                                layer.setStyle({ weight: 6, color: "#c62828", fillOpacity: 0.9 });
-                                layer.bringToFront();
-                                selectedCountyLayer = layer;
+                                                map.fitBounds(layer.getBounds());
+                                            }
+                                        });
+                                    }
+                                }).addTo(map);
 
-                                map.fitBounds(layer.getBounds(), { padding: [30, 30], animate: true, duration: 1 });
-
-                                document.getElementById('provinceInfo').innerHTML = `
-                                    <div class="province-info">
-                                        <h3>${c.Name || c.name || 'نامشخص'}</h3>
-                                        <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${c.pname || c.Pname || provinceName}</span></div>
-                                        ${c.ccenter_na ? `<div class="info-item"><span class="info-label">مرکز شهرستان:</span><span class="info-value">${c.ccenter_na}</span></div>` : ''}
-                                        ${c.area ? `<div class="info-item"><span class="info-label">مساحت:</span><span class="info-value">${Number(c.area).toLocaleString('fa-IR')} هکتار</span></div>` : ''}
-                                        ${c.C_capita !== undefined ? `<div class="info-item"><span class="info-label">سرانه شهرستانی:</span><span class="info-value">${c.C_capita === 0 ? 'صفر' : Number(c.C_capita).toFixed(2)}</span></div>` : ''}
-                                    </div>
-                                `;
-                            });
-
-                            layer.on('mouseover', () => {
-                                if (layer !== selectedCountyLayer) {
-                                    layer.setStyle({ weight: c.C_capita === 0 ? 3.5 : 3.5, color: "#e91e63" });
-                                }
-                            });
-                            layer.on('mouseout', () => {
-                                if (layer !== selectedCountyLayer) {
-                                    countiesLayer.resetStyle(layer);
-                                }
-                            });
-
-                            if ((c.pname || c.Pname) === provinceName) {
-                                layer.addTo(map);
+                                console.log(`${countyFeatures.length} شهرستان بارگذاری شد`);
+                            } catch (err) {
+                                console.error("خطا در بارگذاری شهرستان‌ها:", err);
                             }
                         }
                     });
-
-                    showCountiesOfProvince(provinceName);
-                });
-            return;
-        }
-
-        let count = 0;
-        countiesLayer.eachLayer(l => {
-            const props = l.feature.properties;
-            const pname = props.pname || props.Pname;
-            if (pname === provinceName) {
-                l.addTo(map);
-                countiesLayer.resetStyle(l);
-                if (l === selectedCountyLayer) {
-                    l.setStyle({ weight: 6, color: "#c62828" });
-                    l.bringToFront();
                 }
-                count++;
-            } else {
-                map.removeLayer(l);
-            }
+            }).addTo(map);
+
+            console.log(`${features.length} استان بارگذاری شد`);
+        })
+        .catch(err => {
+            console.error("خطا در بارگذاری استان‌ها:", err);
         });
 
-        const panel = document.getElementById('provinceInfo');
-        const item = panel.querySelector('.info-item:last-child');
-        if (item && item.querySelector('.info-label')?.textContent.includes('شهرستان')) {
-            item.innerHTML = `<span class="info-label">تعداد شهرستان:</span><span class="info-value">${count} شهرستان</span>`;
-        }
-    }
+    // بارگذاری پروژه‌ها
+    fetch('data/Projects.json')
+        .then(r => r.json())
+        .then(data => {
+            const features = data.features;
 
-    function zoomToIran() {
+            features.forEach(feature => {
+                const a = feature.attributes;
+                const x = a.x;
+                const y = a.y;
+
+                if (x && y && !isNaN(x) && !isNaN(y)) {
+                    const marker = L.marker([y, x], { icon: projectIcon });
+
+                    marker.properties = a;
+
+                    marker.on('click', function(e) {
+                        if (selectedProjectMarker) {
+                            selectedProjectMarker.setIcon(projectIcon);
+                        }
+
+                        this.setIcon(selectedProjectIcon);
+                        selectedProjectMarker = this;
+
+						if (selectedLayer) {
+						    selectedLayer.setStyle({ fillOpacity: 0 });
+						}
+
+						if (selectedCountyLayer) {
+						    selectedCountyLayer.setStyle({ fillOpacity: 0 });
+						}
+let financialInfo = '';
+
+if (a.contractAddress && a.contractAddress !== null && a.contractAddress !== "") {
+    financialInfo = `
+    <div class="info-item" style="background:rgba(46,204,113,0.2); padding:12px; border-radius:8px; margin-top:15px;">
+        <span class="info-label">خزانه هوشمند پروژه:</span><br>
+        <span class="info-value contract-address">
+            <a href="https://amoy.polygonscan.com/address/${a.contractAddress}" target="_blank" style="color:#3498db; text-decoration:underline;">
+                ${a.contractAddress}
+            </a>
+        </span>
+    </div>
+
+    <div class="info-item" style="margin-top:15px;">
+        <span class="info-label">برآورد هزینه ساخت:</span>
+        <span class="info-value">${a['targetAmount(USDT)'] ? Number(a['targetAmount(USDT)']).toLocaleString('fa-IR') + ' USDT' : 'نامشخص'}</span>
+    </div>
+    `;
+} else {
+    financialInfo = '<div class="info-item" style="color:#e67e22; margin-top:15px;">خزانه هوشمند هنوز راه‌اندازی نشده</div>';
+}
+						
+showInPanel(`
+    <div class="project-info">
+        <h3>${a['نام پروژه'] || 'بدون نام'}</h3>
+        <div class="info-item"><span class="info-label">کد پروژه:</span><span class="info-value">${a['ProjectID']}</span></div>
+        <div class="info-item"><span class="info-label">استان:</span><span class="info-value">${a['استان']}</span></div>
+        <div class="info-item"><span class="info-label">منطقه:</span><span class="info-value">${a['منطقه']}</span></div>
+        <div class="info-item"><span class="info-label">نوع پروژه:</span><span class="info-value">${a['نوع پروژه (نیاز)']}</span></div>
+        <div class="info-item"><span class="info-label">تعداد کلاس:</span><span class="info-value">${a['تعداد کلاس'] || '—'}</span></div>
+        <div class="info-item"><span class="info-label">زیربنا:</span><span class="info-value">${a['زیربنا'] ? Number(a['زیربنا']).toLocaleString('fa-IR') + ' م²' : '—'}</span></div>
+        <div class="info-item"><span class="info-label">وضعیت:</span><span class="info-value">${a['وضعیت راهبری پروژه'] || '—'}</span></div>
+        <div class="info-item"><span class="info-label">مسئول:</span><span class="info-value">${a['مسئول پروژه'] || '—'}</span></div>
+        <div class="info-item"><span class="info-label">تلفن:</span><span class="info-value">${a['شماره تلفن مسئول پروژه'] || '—'}</span></div>
+        ${a['آدرس پروژه'] ? `<div class="info-item"><span class="info-label">آدرس:</span><span class="info-value">${a['آدرس پروژه']}</span></div>` : ''}
+        ${financialInfo}
+    </div>
+    <div class="fixed-contribute-button" id="fixedContributeBtn" style="display: none;">
+        <button onclick="redirectToDonate('${a.ProjectID}')">
+            مشارکت در ساخت
+        </button>
+        <p>(انتخاب شبکه و پرداخت با کیف پول)</p>
+    </div>
+`);
+if (a.contractAddress && a.contractAddress !== null && a.contractAddress !== "") {
+    currentContractAddress = a.contractAddress;
+    currentProjectId = a.ProjectID;
+    document.getElementById('fixedContributeBtn').style.display = 'block';
+} else {
+    currentContractAddress = null;
+    currentProjectId = null;
+    document.getElementById('fixedContributeBtn').style.display = 'none';
+}
+    map.setView([y, x], 14, { animate: true });
+});
+
+                    markersCluster.addLayer(marker);
+                }
+            });
+
+            map.addLayer(markersCluster);
+            console.log(`${features.length} پروژه با خوشه‌بندی بارگذاری شد`);
+        })
+        .catch(err => {
+            console.error("خطا در بارگذاری پروژه‌ها:", err);
+        });
+	
+    // بازگشت به ایران
+function zoomToIran() {
         map.flyTo([32.4279, 53.6880], 5, { animate: true, duration: 1.5 });
-        if (selectedLayer) { geo.resetStyle(selectedLayer); selectedLayer = null; }
+        if (selectedLayer) { geo?.resetStyle(selectedLayer); selectedLayer = null; }
         if (selectedCountyLayer) { countiesLayer?.resetStyle(selectedCountyLayer); selectedCountyLayer = null; }
+        if (selectedProjectMarker) { selectedProjectMarker.setIcon(projectIcon); selectedProjectMarker = null; }
         if (countiesLayer) map.removeLayer(countiesLayer);
 
-        document.getElementById('provinceInfo').innerHTML = `
+        showInPanel(`
             <div class="no-selection">
-                <div class="icon">نقشه</div>
-                <h3>استان مورد نظر را انتخاب کنید</h3>
-                <p>رنگ بر اساس سرانه جمعیت</p>
+                <div class="icon">Map</div>
+                <h3>یک مورد را انتخاب کنید</h3>
+                <p>روی استان، شهرستان یا پروژه کلیک کنید</p>
             </div>
-        `;
+        `);
+		const fixedBtn = document.getElementById('fixedContributeBtn');
+		if (fixedBtn) fixedBtn.style.display = 'none';
+		currentContractAddress = null;
+		currentProjectId = null;
     }
-
+    // لایه‌های پایه
     const basemapLayers = {
         carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
         persiangis: L.tileLayer('https://map.persiangis.ir/tile/{z}/{x}/{y}.png', { attribution: '© PersianGIS' }),
@@ -364,6 +570,7 @@
         light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
         osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' })
     };
+
     let currentBasemap = basemapLayers.carto;
     currentBasemap.addTo(map);
 
@@ -372,7 +579,14 @@
         currentBasemap = basemapLayers[val];
         currentBasemap.addTo(map);
     }
+
+function redirectToDonate(projectId) {
+    if (projectId) {
+        window.location.href = 'donate.html?project=' + projectId;
+    } else {
+        alert('پروژه انتخاب نشده است');
+    }
+}	
 </script>
 </body>
 </html>
-
