@@ -344,7 +344,7 @@
     <footer>© ۱۴۰۴ کلاس‌چین — آینده آموزش ایران را با هم بسازیم</footer>
 
     <script>
-        // Particles — حرکت خیلی کم برای حس "ثابت بودن"
+        // Particles — کاملاً ثابت (بدون حرکت)
         particlesJS("particles-js", {
             "particles": {
                 "number": { "value": 60 },
@@ -360,12 +360,7 @@
                     "width": 1
                 },
                 "move": { 
-                    "enable": true, 
-                    "speed": 0.3,           // سرعت خیلی کم → تقریباً ثابت
-                    "direction": "none",
-                    "random": false,
-                    "straight": false,
-                    "out_mode": "out"
+                    "enable": false  // حرکت ذرات خاموش شد
                 }
             },
             "interactivity": {
@@ -408,8 +403,8 @@
             }
 
             try {
-                // مسیر درست نسبت به donate.html (فرض بر این است که donate.html در همان سطح WebGIS.html است)
-                const response = await fetch('../data/Projects.json');
+                // مسیر مطلق برای GitHub Pages
+                const response = await fetch('https://arashmardani.github.io/ClassChain/data/Projects.json');
                 if (!response.ok) {
                     throw new Error('فایل Projects.json یافت نشد');
                 }
