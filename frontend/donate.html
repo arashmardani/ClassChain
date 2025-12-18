@@ -38,7 +38,7 @@
             position: fixed;
             width: 100%; height: 100%;
             top: 0; left: 0; z-index: 1;
-            pointer-events: none;  /* <<< اضافه کن */
+            pointer-events: none;
         }
         .hexagon-grid {
             position: fixed;
@@ -134,6 +134,9 @@
             background: rgba(255,255,255,0.05);
             padding: 1.5rem;
             border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .project-title {
@@ -179,6 +182,15 @@
             font-size: 1rem;
             line-height: 1.7;
             color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .consent-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            color: #cbd5e1;
         }
 
         .network-dropdown {
@@ -195,6 +207,14 @@
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
+            appearance: none;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iNyIgdmlld0JveD0iMCAwIDEyIDciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMUw2IDZMMTAgMSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=');
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+        #networkSelect option {
+            padding: 1rem;
+            background: var(--bg);
         }
 
         .amount-input {
@@ -251,6 +271,10 @@
             max-width: 400px;
         }
         .btn-primary:hover { transform: translateY(-5px); }
+        .btn-primary:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
 
         .success-message {
             display: none;
@@ -352,7 +376,11 @@
                 <!-- QR Code -->
                 <div id="qrCode"></div>
 
-                <button class="btn-primary" id="connectBtn">اتصال کیف پول و پرداخت</button>
+                <p style="font-size:0.95rem; color:#94a3b8; margin:1rem 0;">
+                    نکته: آدرس کیف پول شما (در MetaMask) فرستنده کمک است و آدرس خزانه مقصد آن. این دو متفاوت هستند.
+                </p>
+
+                <button class="btn-primary" id="connectBtn" disabled>اتصال کیف پول و پرداخت</button>
 
                 <div class="success-message" id="successMessage">
                     <h3>✅ کمک شما با موفقیت ارسال شد!</h3>
@@ -373,6 +401,10 @@
                 <div class="transparency-note">
                     <strong>تعهدات ما:</strong> تمام کمک‌های شما مستقیماً و بدون کسر هیچ هزینه‌ای به خزانه هوشمند پروژه ارسال می‌شود. پیشرفت ساخت و هزینه‌ها به صورت شفاف گزارش خواهد شد.<br><br>
                     <strong>تعهدات شما:</strong> با ارسال کمک، تأیید می‌کنید که این مبلغ به صورت داوطلبانه و برای ساخت مدرسه اهدا شده است. تمام تراکنش‌ها روی بلاکچین قابل ردیابی هستند.
+                </div>
+                <div class="consent-checkbox">
+                    <input type="checkbox" id="termsConsent">
+                    <label for="termsConsent">این تعهدات را خواندم و تایید می‌کنم</label>
                 </div>
             </div>
         </div>
@@ -409,23 +441,95 @@
         let web3, userAddress, currentContract;
 
         const networks = {
+            ethereum: {
+                name: "Ethereum (ERC-20)",
+                icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+                addressField: "contractAddressEthereum",
+                usdtAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+                chainId: 1,
+                explorer: "https://etherscan.io",
+                apiUrl: "https://api.etherscan.io/api",
+                apiKey: "YOUR_ETHERSCAN_API_KEY" // جایگزین کنید
+            },
+            polygon: {
+                name: "Polygon (POS)",
+                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+                addressField: "contractAddressPolygon",
+                usdtAddress: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+                chainId: 137,
+                explorer: "https://polygonscan.com",
+                apiUrl: "https://api.polygonscan.com/api",
+                apiKey: "YOUR_POLYGONSCAN_API_KEY"
+            },
             amoy: {
                 name: "Polygon Amoy (تست‌نت)",
-                addressField: "contractAddress",
+                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+                addressField: "contractAddressAmoy",
                 usdtAddress: "0x41e94eb019c0762f9bfcf9fb78e59bec0a32e187",
                 chainId: 80002,
                 explorer: "https://amoy.polygonscan.com",
                 apiUrl: "https://api-amoy.polygonscan.com/api",
-                apiKey: "DYB75BHRNWEGAGAEH73AWJUPQ8EDRKN7RB" // کلید API عمومی - جایگزین کنید اگر لازم
+                apiKey: "DYB75BHRNWEGAGAEH73AWJUPQ8EDRKN7RB"
             },
-            polygon: {
-                name: "Polygon Mainnet",
-                addressField: "contractAddressMainnet",
-                usdtAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-                chainId: 137,
-                explorer: "https://polygonscan.com",
-                apiUrl: "https://api.polygonscan.com/api",
-                apiKey: "YOUR_POLYGONSCAN_API_KEY" // جایگزین با کلید واقعی
+            tron: {
+                name: "Tron (TRC-20)",
+                icon: "https://cryptologos.cc/logos/tron-trx-logo.png",
+                addressField: "contractAddressTron",
+                usdtAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                chainId: null, // Tron is not EVM, handle separately
+                explorer: "https://tronscan.org",
+                apiUrl: "https://api.tronscan.org/api", // Adjust for Tron API
+                apiKey: "YOUR_TRONSCAN_API_KEY"
+            },
+            bsc: {
+                name: "Binance Smart Chain (BEP-20)",
+                icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+                addressField: "contractAddressBSC",
+                usdtAddress: "0x55d398326f99059ff7754852469993b3197955e7",
+                chainId: 56,
+                explorer: "https://bscscan.com",
+                apiUrl: "https://api.bscscan.com/api",
+                apiKey: "YOUR_BSCSCAN_API_KEY"
+            },
+            solana: {
+                name: "Solana",
+                icon: "https://cryptologos.cc/logos/solana-sol-logo.png",
+                addressField: "contractAddressSolana",
+                usdtAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+                chainId: null, // Solana not EVM
+                explorer: "https://solscan.io",
+                apiUrl: "https://api.solscan.io/api", // Adjust
+                apiKey: "YOUR_SOLSCAN_API_KEY"
+            },
+            avalanche: {
+                name: "Avalanche C-Chain",
+                icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+                addressField: "contractAddressAvalanche",
+                usdtAddress: "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
+                chainId: 43114,
+                explorer: "https://snowtrace.io",
+                apiUrl: "https://api.snowtrace.io/api",
+                apiKey: "YOUR_SNOWTRACE_API_KEY"
+            },
+            arbitrum: {
+                name: "Arbitrum One",
+                icon: "https://cryptologos.cc/logos/arbitrum-arb-logo.png",
+                addressField: "contractAddressArbitrum",
+                usdtAddress: "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
+                chainId: 42161,
+                explorer: "https://arbiscan.io",
+                apiUrl: "https://api.arbiscan.io/api",
+                apiKey: "YOUR_ARBISCAN_API_KEY"
+            },
+            optimism: {
+                name: "Optimism",
+                icon: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png",
+                addressField: "contractAddressOptimism",
+                usdtAddress: "0x94b008aa00579c13056b0a762ad3af54ac829873",
+                chainId: 10,
+                explorer: "https://optimistic.etherscan.io",
+                apiUrl: "https://api-optimistic.etherscan.io/api",
+                apiKey: "YOUR_OPTIMISM_API_KEY"
             }
         };
 
@@ -477,7 +581,7 @@
                 if (projectData[net.addressField]) {
                     const option = document.createElement('option');
                     option.value = key;
-                    option.text = net.name;
+                    option.innerHTML = `<img src="${net.icon}" alt="${net.name}" style="width:20px; height:20px; margin-left:10px; vertical-align:middle;"> ${net.name}`;
                     if (key === 'amoy') option.selected = true;
                     select.appendChild(option);
                 }
@@ -520,7 +624,7 @@
             const net = networks[selectedNetwork];
             const contractAddress = currentContract;
 
-            if (contractAddress) {
+            if (contractAddress && net.apiUrl && net.apiKey) {
                 const url = `${net.apiUrl}?module=account&action=tokentx&contractaddress=${net.usdtAddress}&address=${contractAddress}&sort=desc&apikey=${net.apiKey}`;
                 try {
                     const response = await fetch(url);
@@ -528,7 +632,7 @@
                     if (data.status === "1" && data.result.length > 0) {
                         data.result.forEach(tx => {
                             if (tx.to.toLowerCase() === contractAddress.toLowerCase()) {
-                                raised += parseInt(tx.value) / 1e6; // USDT 6 decimals
+                                raised += parseInt(tx.value) / 1e6;
                             }
                         });
                     }
@@ -600,6 +704,11 @@
                 }
             }
         };
+
+        // فعال کردن دکمه با تیک چک‌باکس
+        document.getElementById('termsConsent').addEventListener('change', function() {
+            document.getElementById('connectBtn').disabled = !this.checked;
+        });
 
         function saveEmail() {
             const email = document.getElementById('donorEmail').value.trim();
