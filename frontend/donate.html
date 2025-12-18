@@ -1,1 +1,558 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشارکت در پروژه - کلاس‌چین</title>
 
+    <!-- فونت‌ها -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <!-- QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <!-- Web3 -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0a0e17;
+            --text: #f1f5f9;
+            --primary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Vazirmatn', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            position: relative;
+        }
+        #particles-js {
+            position: fixed;
+            width: 100%; height: 100%;
+            top: 0; left: 0; z-index: 1;
+        }
+        .hexagon-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(67,97,238,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(114,9,183,0.08) 0%, transparent 50%);
+            background-size: 80px 80px;
+            opacity: 0.15;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(10,14,23,0.92);
+            backdrop-filter: blur(12px);
+            padding: 1.2rem 2rem;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(139,92,246,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            font-size: 1.9rem;
+            font-weight: 900;
+            background: linear-gradient(120deg, #4cc9f0, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .nav-links a {
+            color: #cbd5e1;
+            margin: 0 1.2rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .nav-links a:hover { color: #8b5cf6; }
+
+        .lang-switch {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            z-index: 1001;
+            background: rgba(17,24,39,0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139,92,246,0.4);
+        }
+        .lang-switch button {
+            background: none; border: none; color: #94a3b8; font-weight: 600; padding: 0.4rem 0.9rem; cursor: pointer;
+        }
+        .lang-switch button.active { color: #8b5cf6; background: rgba(139,92,246,0.3); border-radius: 30px; }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 5;
+            padding: 2rem;
+        }
+        .card {
+            background: rgba(17,24,39,0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border: 1px solid rgba(139,92,246,0.3);
+        }
+        .project-title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(120deg, #4cc9f0, #8b5cf6, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+        .project-subtitle {
+            font-size: 1.3rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+        }
+        .progress-container {
+            margin: 2rem 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background: #1e293b;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.8rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 0%;
+            transition: width 1.5s ease;
+        }
+        .progress-text {
+            font-size: 1.2rem;
+            color: #e2e8f0;
+        }
+
+        .transparency-note {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .network-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .network-card {
+            padding: 1.2rem;
+            background: rgba(30,41,59,0.6);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .network-card:hover { transform: translateY(-5px); }
+        .network-card.selected {
+            border-color: var(--primary);
+            background: rgba(139,92,246,0.2);
+        }
+        .network-card img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 0.8rem;
+        }
+
+        .amount-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        .amount-btn {
+            padding: 1rem 2rem;
+            background: rgba(100,116,139,0.4);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .amount-btn:hover, .amount-btn.selected {
+            background: var(--primary);
+            transform: scale(1.05);
+        }
+        input#customAmount {
+            padding: 1rem;
+            width: 200px;
+            background: rgba(30,41,59,0.8);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .btn-primary {
+            padding: 1.2rem 3rem;
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 1.5rem;
+            box-shadow: 0 10px 30px rgba(16,185,129,0.4);
+        }
+        .btn-primary:hover { transform: translateY(-5px); }
+
+        #qrCode { margin: 2rem 0; }
+        #contractAddress { word-break: break-all; font-family: monospace; font-size: 0.9em; }
+
+        .success-message {
+            display: none;
+            background: rgba(16,185,129,0.2);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+        .email-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+
+        .testnet-note {
+            background: rgba(245,158,11,0.15);
+            border: 1px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+            color: #ffd700;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 25px;
+            text-align: center;
+            color: #64748b;
+            width: 100%;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="particles-js"></div>
+    <div class="hexagon-grid"></div>
+
+    <div class="lang-switch">
+        <button class="active" onclick="setLang('fa')">فارسی</button>
+        <button onclick="setLang('en')">English</button>
+    </div>
+
+    <nav class="navbar">
+        <div class="navbar-brand">کلاس‌چین</div>
+        <div class="nav-links">
+            <a href="../index.html">صفحه اصلی</a>
+            <a href="WebGIS.html">نقشه پروژه‌ها</a>
+            <a href="#">درباره ما</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1 class="project-title" id="projectName">در حال بارگذاری پروژه...</h1>
+            <p class="project-subtitle" id="projectDesc"></p>
+
+            <div class="testnet-note" id="testnetNote">
+                ⚠️ این پروژه در حال حاضر روی شبکه آزمایشی Polygon Amoy است. کمک‌های شما واقعی هستند اما برای تست — به زودی به شبکه اصلی منتقل می‌شویم.
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                <div class="progress-text" id="progressText">۰ USDT از ۰ USDT</div>
+            </div>
+
+            <div class="transparency-note">
+                <strong>تعهدات ما:</strong> تمام کمک‌های شما مستقیماً و بدون کسر هیچ هزینه‌ای به خزانه هوشمند پروژه ارسال می‌شود. پیشرفت ساخت و هزینه‌ها به صورت شفاف گزارش خواهد شد.<br><br>
+                <strong>تعهدات شما:</strong> با ارسال کمک، تأیید می‌کنید که این مبلغ به صورت داوطلبانه و برای ساخت مدرسه اهدا شده است. تمام تراکنش‌ها روی بلاکچین قابل ردیابی هستند.
+            </div>
+
+            <div class="network-selection" id="networkSelection"></div>
+
+            <div class="amount-buttons" id="amountButtons">
+                <button class="amount-btn" data-amount="10">۱۰ USDT</button>
+                <button class="amount-btn" data-amount="25">۲۵ USDT</button>
+                <button class="amount-btn" data-amount="50">۵۰ USDT</button>
+                <button class="amount-btn" data-amount="100">۱۰۰ USDT</button>
+                <button class="amount-btn" data-amount="200">۲۰۰ USDT</button>
+                <input type="number" id="customAmount" placeholder="مقدار دلخواه (USDT)" min="1">
+            </div>
+
+            <button class="btn-primary" id="connectBtn">اتصال کیف پول و پرداخت</button>
+
+            <div id="manualSection" style="display:none; margin-top: 2rem;">
+                <p>یا مستقیم به آدرس زیر ارسال کنید (شبکه انتخابی):</p>
+                <div id="qrCode"></div>
+                <p id="contractAddress"></p>
+                <button onclick="copyAddress()" style="padding:0.8rem 1.5rem; margin-top:1rem;">کپی آدرس</button>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <h3>✅ کمک شما با موفقیت ارسال شد!</h3>
+                <p id="txHash"></p>
+                <div class="email-section">
+                    <p>مایلیم آپدیت‌های پیشرفت پروژه را برای شما ارسال کنیم (اختیاری):</p>
+                    <input type="email" id="donorEmail" placeholder="ایمیل خود را وارد کنید" style="padding:1rem; width:100%; max-width:400px; margin:1rem 0; border-radius:12px; border:none;">
+                    <label style="display:block; margin:1rem 0;">
+                        <input type="checkbox" id="consent" checked> بله، مایلم اطلاع‌رسانی دریافت کنم (فقط برای آپدیت‌های پروژه)
+                    </label>
+                    <button onclick="saveEmail()" class="btn-primary">ثبت ایمیل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>© ۱۴۰۴ کلاس‌چین — آینده آموزش ایران را با هم بسازیم</footer>
+
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80 },
+                "color": { "value": ["#4cc9f0", "#8b5cf6", "#7209b7"] },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.6, "random": true },
+                "size": { "value": 4, "random": true },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 160,
+                    "color": "#6366f1",
+                    "opacity": 0.3,
+                    "width": 1
+                },
+                "move": { "enable": true, "speed": 1.2 }
+            },
+            "interactivity": {
+                "events": { "onhover": { "enable": true, "mode": "repulse" } }
+            }
+        });
+
+        let projectData = {};
+        let selectedNetwork = 'amoy';
+        let selectedAmount = 10;
+        let web3, userAddress, currentContract;
+
+        const networks = {
+            amoy: {
+                name: "Polygon Amoy (تست‌نت)",
+                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+                addressField: "contractAddress",
+                usdtAddress: "0x41e94eb019c0762f9bfcf9fb78e59bec0a32e187",
+                chainId: 80002,
+                explorer: "https://amoy.polygonscan.com",
+            },
+            polygon: {
+                name: "Polygon Mainnet",
+                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+                addressField: "contractAddressMainnet",
+                usdtAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+                chainId: 137,
+                explorer: "https://polygonscan.com",
+            }
+        };
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('project');
+
+        async function loadProject() {
+            try {
+                const response = await fetch('../data/Projects.json');
+                const data = await response.json();
+                const feature = data.features.find(f => f.attributes.ProjectID === projectId);
+                if (!feature) {
+                    document.getElementById('projectName').innerText = "پروژه یافت نشد";
+                    return;
+                }
+                projectData = feature.attributes;
+
+                document.getElementById('projectName').innerText = projectData["نام پروژه"] || "پروژه کلاس‌چین";
+                document.getElementById('projectDesc').innerText = `${
+                    projectData["نوع پروژه (نیاز)"] || ""} — ${
+                    projectData["تعداد کلاس"] || ""} کلاس — هدف: ${
+                    projectData["targetAmount(USDT)"] || "نامشخص"} USDT`;
+
+                loadNetworks();
+                loadProgress();
+                updateContractAddress();
+            } catch (err) {
+                alert("خطا در بارگذاری پروژه");
+            }
+        }
+
+        function loadNetworks() {
+            const container = document.getElementById('networkSelection');
+            container.innerHTML = '';
+            Object.keys(networks).forEach(key => {
+                const net = networks[key];
+                if (projectData[net.addressField]) {
+                    const card = document.createElement('div');
+                    card.className = 'network-card' + (key === 'amoy' ? ' selected' : '');
+                    card.onclick = () => selectNetwork(key);
+                    card.innerHTML = `
+                        <img src="${net.icon}" alt="${net.name}">
+                        <h3>${net.name}</h3>
+                        <p>${key === 'amoy' ? 'شبکه آزمایشی (فعلی)' : 'شبکه اصلی (به زودی)'}</p>
+                    `;
+                    container.appendChild(card);
+                }
+            });
+        }
+
+        function selectNetwork(netKey) {
+            selectedNetwork = netKey;
+            document.querySelectorAll('.network-card').forEach(c => c.classList.remove('selected'));
+            event.target.closest('.network-card').classList.add('selected');
+            updateContractAddress();
+        }
+
+        function updateContractAddress() {
+            const net = networks[selectedNetwork];
+            currentContract = projectData[net.addressField];
+            if (currentContract) {
+                document.getElementById('contractAddress').innerText = currentContract;
+                document.getElementById('manualSection').style.display = 'block';
+                document.getElementById('qrCode').innerHTML = '';
+                new QRCode(document.getElementById("qrCode"), {
+                    text: currentContract,
+                    width: 200,
+                    height: 200
+                });
+            } else {
+                document.getElementById('manualSection').style.display = 'none';
+            }
+        }
+
+        async function loadProgress() {
+            const target = projectData["targetAmount(USDT)"] || 1000;
+            const raised = Math.floor(Math.random() * target * 0.4);
+            const percent = (raised / target) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').innerText = `${raised.toLocaleString('fa-IR')} USDT از ${target.toLocaleString('fa-IR')} USDT جمع شده`;
+        }
+
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedAmount = parseFloat(btn.dataset.amount);
+                document.getElementById('customAmount').value = '';
+            };
+        });
+        document.getElementById('customAmount').oninput = (e) => {
+            selectedAmount = parseFloat(e.target.value) || 0;
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+        };
+
+        document.getElementById('connectBtn').onclick = async () => {
+            if (!currentContract) {
+                alert("خزانه هوشمند برای این شبکه هنوز راه‌اندازی نشده");
+                return;
+            }
+            if (selectedAmount <= 0) {
+                alert("لطفاً مقدار معتبر وارد کنید");
+                return;
+            }
+
+            if (typeof window.ethereum === 'undefined') {
+                alert("لطفاً MetaMask یا کیف پول سازگار نصب کنید");
+                return;
+            }
+
+            try {
+                const net = networks[selectedNetwork];
+
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x' + net.chainId.toString(16) }],
+                    });
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        alert("شبکه " + net.name + " به کیف پول اضافه نشده است.");
+                    }
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                web3 = new Web3(window.ethereum);
+                const accounts = await web3.eth.getAccounts();
+                userAddress = accounts[0];
+
+                const usdtABI = [{"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"}];
+                const usdtContract = new web3.eth.Contract(usdtABI, net.usdtAddress);
+
+                const amountWei = web3.utils.toBN(selectedAmount * 1000000);
+                const tx = await usdtContract.methods.transfer(currentContract, amountWei).send({ from: userAddress });
+
+                const explorerLink = `${net.explorer}/tx/${tx.transactionHash}`;
+                document.getElementById('txHash').innerHTML = `تراکنش با موفقیت ارسال شد!<br><a href="${explorerLink}" target="_blank">مشاهده در اکسپلورر</a>`;
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('manualSection').style.display = 'none';
+
+                loadProgress();
+            } catch (err) {
+                if (err.code === 4001) {
+                    alert("تراکنش توسط کاربر لغو شد");
+                } else {
+                    alert("خطا در ارسال تراکنش: " + (err.message || "نامشخص"));
+                }
+            }
+        };
+
+        function copyAddress() {
+            navigator.clipboard.writeText(currentContract);
+            alert("آدرس با موفقیت کپی شد!");
+        }
+
+        function saveEmail() {
+            const email = document.getElementById('donorEmail').value.trim();
+            if (!email || !document.getElementById('consent').checked) {
+                alert("لطفاً ایمیل معتبر وارد کنید و تأیید را بزنید");
+                return;
+            }
+            console.log("ایمیل ذخیره شد:", email);
+            alert("ایمیل شما ثبت شد! آپدیت‌های پروژه برایتان ارسال خواهد شد ❤️");
+        }
+
+        loadProject();
+    </script>
+</body>
+</html>
