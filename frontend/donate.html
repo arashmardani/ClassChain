@@ -97,10 +97,9 @@
         }
         .lang-switch button.active { color: #8b5cf6; background: rgba(139,92,246,0.3); border-radius: 30px; }
 
-        /* اسکرول دار شدن صفحه */
         .main-container {
             min-height: 100vh;
-            padding: 100px 1rem 80px; /* بالا برای navbar، پایین برای footer */
+            padding: 100px 1rem 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -117,7 +116,25 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.6);
             border: 1px solid rgba(139,92,246,0.3);
             margin-bottom: 2rem;
+            display: flex;
+            flex-direction: row;
+            gap: 2rem;
         }
+        @media (max-width: 768px) {
+            .card { flex-direction: column; }
+        }
+
+        .main-content {
+            flex: 2;
+        }
+
+        .sidebar {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
         .project-title {
             font-size: 2.5rem;
             font-weight: 900;
@@ -158,43 +175,29 @@
         }
 
         .transparency-note {
-            background: rgba(255,255,255,0.05);
-            padding: 1.2rem;
-            border-radius: 12px;
-            margin: 1.5rem 0;
             font-size: 1rem;
             line-height: 1.7;
             color: #cbd5e1;
         }
 
-        .network-selection {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+        .network-dropdown {
             margin: 1.5rem 0;
-        }
-        .network-card {
-            padding: 1.2rem;
-            background: rgba(30,41,59,0.6);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
             text-align: center;
         }
-        .network-card:hover { transform: translateY(-5px); }
-        .network-card.selected {
-            border-color: var(--primary);
-            background: rgba(139,92,246,0.2);
-        }
-        .network-card img {
-            width: 45px;
-            height: 45px;
-            margin-bottom: 0.8rem;
+        #networkSelect {
+            padding: 1rem;
+            width: 100%;
+            max-width: 400px;
+            background: rgba(30,41,59,0.8);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
         }
 
         .amount-input {
-            margin: 2rem 0;
+            margin: 1.5rem 0;
             text-align: center;
         }
         input#customAmount {
@@ -218,10 +221,13 @@
             padding: 1.2rem;
             background: rgba(30,41,59,0.6);
             border-radius: 12px;
-            word-break: break-all;
             font-family: monospace;
             font-size: 0.95rem;
             text-align: center;
+        }
+        .contract-info a {
+            color: #3498db;
+            text-decoration: underline;
         }
 
         #qrCode { 
@@ -274,21 +280,19 @@
             font-size: 0.9rem;
         }
 
-        /* ریسپانسیو برای صفحه‌های کوچک */
         @media (max-width: 768px) {
             .project-title { font-size: 2rem; }
             .navbar { padding: 0.8rem 1rem; }
             .navbar-brand { font-size: 1.4rem; }
             .nav-links a { margin: 0 0.5rem; font-size: 0.9rem; }
             .lang-switch { top: 70px; left: 10px; }
-            .card { padding: 1.5rem; }
+            .card { padding: 1.5rem; flex-direction: column; }
             input#customAmount { font-size: 1.2rem; }
             .btn-primary { font-size: 1.2rem; padding: 0.9rem 2rem; }
         }
 
         @media (max-width: 480px) {
             .project-title { font-size: 1.8rem; }
-            .network-selection { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -311,55 +315,63 @@
         </div>
     </nav>
 
-    <!-- اسکرول دار شدن محتوا -->
     <div class="main-container">
         <div class="card">
-            <h1 class="project-title" id="projectName">در حال بارگذاری پروژه...</h1>
-            <p class="project-subtitle" id="projectDesc"></p>
+            <div class="main-content">
+                <h1 class="project-title" id="projectName">در حال بارگذاری پروژه...</h1>
+                <p class="project-subtitle" id="projectDesc"></p>
 
-            <div class="testnet-note" id="testnetNote">
-                ⚠️ این پروژه در حال حاضر روی شبکه آزمایشی Polygon Amoy است. کمک‌های شما واقعی هستند اما برای تست — به زودی به شبکه اصلی منتقل می‌شویم.
+                <div class="testnet-note" id="testnetNote">
+                    ⚠️ این پروژه در حال حاضر روی شبکه آزمایشی Polygon Amoy است. کمک‌های شما واقعی هستند اما برای تست — به زودی به شبکه اصلی منتقل می‌شویم.
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <div class="progress-text" id="progressText">در حال محاسبه کمک‌ها...</div>
+                </div>
+
+                <!-- انتخاب شبکه -->
+                <div class="network-dropdown">
+                    <select id="networkSelect" onchange="selectNetwork(this.value)">
+                        <!-- گزینه‌ها داینامیک اضافه می‌شن -->
+                    </select>
+                </div>
+
+                <!-- مبلغ اختیاری -->
+                <div class="amount-input">
+                    <input type="number" id="customAmount" placeholder="مقدار کمک خود را به USDT وارد کنید" min="1" step="0.01">
+                </div>
+
+                <!-- نمایش آدرس خزانه با لینک -->
+                <div class="contract-info" id="contractInfo" style="display:none;">
+                    <strong>آدرس خزانه هوشمند (شبکه انتخابی):</strong><br>
+                    <a id="contractLink" href="#" target="_blank" style="color:#3498db; text-decoration:underline;"></a>
+                </div>
+
+                <!-- QR Code -->
+                <div id="qrCode"></div>
+
+                <button class="btn-primary" id="connectBtn">اتصال کیف پول و پرداخت</button>
+
+                <div class="success-message" id="successMessage">
+                    <h3>✅ کمک شما با موفقیت ارسال شد!</h3>
+                    <p id="txHash"></p>
+                    <div class="email-section">
+                        <p>مایلیم آپدیت‌های پیشرفت پروژه را برای شما ارسال کنیم (اختیاری):</p>
+                        <input type="email" id="donorEmail" placeholder="ایمیل خود را وارد کنید" style="padding:1rem; width:100%; max-width:400px; margin:1rem 0; border-radius:12px; border:none;">
+                        <label style="display:block; margin:1rem 0;">
+                            <input type="checkbox" id="consent" checked> بله، مایلم اطلاع‌رسانی دریافت کنم (فقط برای آپدیت‌های پروژه)
+                        </label>
+                        <button onclick="saveEmail()" class="btn-primary">ثبت ایمیل</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="progress-container">
-                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                <div class="progress-text" id="progressText">۰ USDT از ۰ USDT</div>
-            </div>
-
-            <div class="transparency-note">
-                <strong>تعهدات ما:</strong> تمام کمک‌های شما مستقیماً و بدون کسر هیچ هزینه‌ای به خزانه هوشمند پروژه ارسال می‌شود. پیشرفت ساخت و هزینه‌ها به صورت شفاف گزارش خواهد شد.<br><br>
-                <strong>تعهدات شما:</strong> با ارسال کمک، تأیید می‌کنید که این مبلغ به صورت داوطلبانه و برای ساخت مدرسه اهدا شده است. تمام تراکنش‌ها روی بلاکچین قابل ردیابی هستند.
-            </div>
-
-            <!-- انتخاب شبکه -->
-            <div class="network-selection" id="networkSelection"></div>
-
-            <!-- مبلغ اختیاری -->
-            <div class="amount-input">
-                <input type="number" id="customAmount" placeholder="مقدار کمک خود را به USDT وارد کنید" min="1" step="0.01">
-            </div>
-
-            <!-- نمایش آدرس خزانه -->
-            <div class="contract-info" id="contractInfo" style="display:none;">
-                <strong>آدرس خزانه هوشمند (شبکه انتخابی):</strong><br>
-                <span id="contractAddress"></span>
-            </div>
-
-            <!-- QR Code -->
-            <div id="qrCode"></div>
-
-            <button class="btn-primary" id="connectBtn">اتصال کیف پول و پرداخت</button>
-
-            <div class="success-message" id="successMessage">
-                <h3>✅ کمک شما با موفقیت ارسال شد!</h3>
-                <p id="txHash"></p>
-                <div class="email-section">
-                    <p>مایلیم آپدیت‌های پیشرفت پروژه را برای شما ارسال کنیم (اختیاری):</p>
-                    <input type="email" id="donorEmail" placeholder="ایمیل خود را وارد کنید">
-                    <label>
-                        <input type="checkbox" id="consent" checked> بله، مایلم اطلاع‌رسانی دریافت کنم
-                    </label>
-                    <button onclick="saveEmail()" class="btn-primary">ثبت ایمیل</button>
+            <!-- تعهدات به کنار (سایدبار) -->
+            <div class="sidebar">
+                <div class="transparency-note">
+                    <strong>تعهدات ما:</strong> تمام کمک‌های شما مستقیماً و بدون کسر هیچ هزینه‌ای به خزانه هوشمند پروژه ارسال می‌شود. پیشرفت ساخت و هزینه‌ها به صورت شفاف گزارش خواهد شد.<br><br>
+                    <strong>تعهدات شما:</strong> با ارسال کمک، تأیید می‌کنید که این مبلغ به صورت داوطلبانه و برای ساخت مدرسه اهدا شده است. تمام تراکنش‌ها روی بلاکچین قابل ردیابی هستند.
                 </div>
             </div>
         </div>
@@ -398,19 +410,21 @@
         const networks = {
             amoy: {
                 name: "Polygon Amoy (تست‌نت)",
-                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
                 addressField: "contractAddress",
                 usdtAddress: "0x41e94eb019c0762f9bfcf9fb78e59bec0a32e187",
                 chainId: 80002,
                 explorer: "https://amoy.polygonscan.com",
+                apiUrl: "https://api-amoy.polygonscan.com/api",
+                apiKey: "DYB75BHRNWEGAGAEH73AWJUPQ8EDRKN7RB" // کلید API عمومی - جایگزین کنید اگر لازم
             },
             polygon: {
                 name: "Polygon Mainnet",
-                icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
                 addressField: "contractAddressMainnet",
                 usdtAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
                 chainId: 137,
                 explorer: "https://polygonscan.com",
+                apiUrl: "https://api.polygonscan.com/api",
+                apiKey: "YOUR_POLYGONSCAN_API_KEY" // جایگزین با کلید واقعی
             }
         };
 
@@ -425,7 +439,7 @@
             }
 
             try {
-                const response = await fetch('data/Projects.json');
+                const response = await fetch('https://arashmardani.github.io/ClassChain/data/Projects.json');
                 if (!response.ok) throw new Error('فایل Projects.json یافت نشد');
                 const data = await response.json();
                 const feature = data.features.find(f => f.attributes.ProjectID === projectId);
@@ -444,7 +458,7 @@
                     projectData["تعداد کلاس"] || ""} کلاس — هدف: ${
                     projectData["targetAmount(USDT)"] || "نامشخص"} USDT`;
 
-                loadNetworks();
+                loadNetworkDropdown();
                 loadProgress();
                 updateContractAddress();
             } catch (err) {
@@ -454,41 +468,37 @@
             }
         }
 
-        function loadNetworks() {
-            const container = document.getElementById('networkSelection');
-            container.innerHTML = '';
+        function loadNetworkDropdown() {
+            const select = document.getElementById('networkSelect');
+            select.innerHTML = '';
             Object.keys(networks).forEach(key => {
                 const net = networks[key];
                 if (projectData[net.addressField]) {
-                    const card = document.createElement('div');
-                    card.className = 'network-card' + (key === 'amoy' ? ' selected' : '');
-                    card.onclick = () => selectNetwork(key);
-                    card.innerHTML = `
-                        <img src="${net.icon}" alt="${net.name}">
-                        <h3>${net.name}</h3>
-                        <p>${key === 'amoy' ? 'شبکه آزمایشی (فعلی)' : 'شبکه اصلی (به زودی)'}</p>
-                    `;
-                    container.appendChild(card);
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.text = net.name;
+                    if (key === 'amoy') option.selected = true;
+                    select.appendChild(option);
                 }
             });
         }
 
         function selectNetwork(netKey) {
             selectedNetwork = netKey;
-            document.querySelectorAll('.network-card').forEach(c => c.classList.remove('selected'));
-            event.target.closest('.network-card').classList.add('selected');
             updateContractAddress();
+            loadProgress();
         }
 
         function updateContractAddress() {
             const net = networks[selectedNetwork];
             currentContract = projectData[net.addressField];
             const contractInfo = document.getElementById('contractInfo');
-            const contractAddressEl = document.getElementById('contractAddress');
+            const contractLink = document.getElementById('contractLink');
             const qrContainer = document.getElementById('qrCode');
 
             if (currentContract) {
-                contractAddressEl.innerText = currentContract;
+                contractLink.href = `${net.explorer}/address/${currentContract}`;
+                contractLink.innerText = currentContract;
                 contractInfo.style.display = 'block';
                 qrContainer.innerHTML = '';
                 new QRCode(qrContainer, {
@@ -503,11 +513,32 @@
         }
 
         async function loadProgress() {
+            document.getElementById('progressText').innerText = 'در حال محاسبه کمک‌ها...';
             const target = parseFloat(projectData["targetAmount(USDT)"]) || 1000;
-            const raised = Math.floor(Math.random() * target * 0.4);
+            let raised = 0;
+            const net = networks[selectedNetwork];
+            const contractAddress = currentContract;
+
+            if (contractAddress) {
+                const url = `${net.apiUrl}?module=account&action=tokentx&contractaddress=${net.usdtAddress}&address=${contractAddress}&sort=desc&apikey=${net.apiKey}`;
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (data.status === "1" && data.result.length > 0) {
+                        data.result.forEach(tx => {
+                            if (tx.to.toLowerCase() === contractAddress.toLowerCase()) {
+                                raised += parseInt(tx.value) / 1e6; // USDT 6 decimals
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error("خطا در بارگذاری کمک‌ها:", err);
+                }
+            }
+
             const percent = (raised / target) * 100;
             document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('progressText').innerText = `${raised.toLocaleString('fa-IR')} USDT از ${target.toLocaleString('fa-IR')} USDT جمع شده`;
+            document.getElementById('progressText').innerText = `${raised.toFixed(2)} USDT از ${target.toLocaleString('fa-IR')} USDT جمع شده`;
         }
 
         document.getElementById('customAmount').oninput = (e) => {
