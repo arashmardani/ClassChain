@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مشارکت در پروژه - ClassChain</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+body { background:#0a0e17; color:#fff; font-family:Vazirmatn; }
+.progress-bar { background:#1e293b; height:20px; border-radius:10px; overflow:hidden }
+.progress-fill { background:#10b981; height:100%; width:0% }
+</style>
+</head>
+
+<body>
+
+<h1 id="projectName">در حال بارگذاری…</h1>
+<p id="projectDesc"></p>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+<p id="progressText"></p>
+
+<select id="networkSelect"></select>
+<input type="number" id="amount" placeholder="مقدار USDT">
+<button id="payBtn">پرداخت</button>
+
+<div id="qrCode"></div>
+
+<script>
+/* ================= CONFIG ================= */
+
+const API_KEYS = {
+  ethereum: "ETHERSCAN_API_KEY",
+  polygon: "POLYGONSCAN_API_KEY",
+  bsc: "BSCSCAN_API_KEY",
+  tron: "TRONSCAN_API_KEY"
+};
+
+const USDT = {
+  ethereum: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  polygon: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+  bsc: "0x55d398326f99059fF775485246999027B3197955",
+  tron: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+};
+
+const CLC_AMOY = "0xYOUR_CLC_TOKEN";
+
+/* ============== LOAD PROJECT ============== */
+
+const projectId = new URLSearchParams(location.search).get("project");
+let project;
+
+async function loadProject() {
+  const res = await fetch("data/Projects.json");
+  const data = await res.json();
+  project = data.features.find(f => f.attributes.ProjectID === projectId).attributes;
+
+  document.getElementById("projectName").innerText = project["نام پروژه"];
+  document.getElementById("projectDesc").innerText = project["نوع پروژه (نیاز)"];
+
+  loadNetworks();
+  loadProgress();
+}
+
+function loadNetworks() {
+  const s = document.getElementById("networkSelect");
+  s.innerHTML = "";
+
+  const nets = [
+    ["ethereum","Ethereum",project.contractAddressEthereum],
+    ["polygon","Polygon",project.contractAddressMainnet],
+    ["bsc","BSC",project.contractAddressBSC],
+    ["tron","Tron",project.contractAddressTron],
+    ["amoy","Polygon Amoy",project.contractAddress]
+  ];
+
+  nets.forEach(n=>{
+    if(n[2]){
+      const o = document.createElement("option");
+      o.value=n[0];
+      o.text=n[1];
+      s.appendChild(o);
+    }
+  });
+}
+
+/* ============ REAL PROGRESS ============ */
+
+async function loadProgress() {
+  let total = 0;
+
+  if(project.contractAddressEthereum)
+    total += await evmSum("ethereum", project.contractAddressEthereum);
+
+  if(project.contractAddressMainnet)
+    total += await evmSum("polygon", project.contractAddressMainnet);
+
+  if(project.contractAddressBSC)
+    total += await evmSum("bsc", project.contractAddressBSC);
+
+  if(project.contractAddressTron)
+    total += await tronSum(project.contractAddressTron);
+
+  const target = project["targetAmount(USDT)"];
+  const percent = Math.min(100, (total/target)*100);
+
+  document.getElementById("progressFill").style.width = percent+"%";
+  document.getElementById("progressText").innerText =
+    `${total.toFixed(2)} USDT از ${target} USDT`;
+}
+
+/* ======== EXPLORER FUNCTIONS ======== */
+
+async function evmSum(net, address){
+  const base = {
+    ethereum:"https://api.etherscan.io/api",
+    polygon:"https://api.polygonscan.com/api",
+    bsc:"https://api.bscscan.com/api"
+  }[net];
+
+  const url = `${base}?module=account&action=tokentx&contractaddress=${USDT[net]}&address=${address}&apikey=${API_KEYS[net]}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  let sum = 0;
+  data.result.forEach(tx=>{
+    if(tx.to.toLowerCase() === address.toLowerCase()){
+      sum += tx.value / 1e6;
+    }
+  });
+  return sum;
+}
+
+async function tronSum(address){
+  const url = `https://apilist.tronscan.org/api/token_trc20/transfers?relatedAddress=${address}&limit=200`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  let sum = 0;
+  data.token_transfers.forEach(tx=>{
+    if(tx.to_address === address && tx.tokenInfo.tokenId === USDT.tron){
+      sum += tx.quant / 1e6;
+    }
+  });
+  return sum;
+}
+
+/* ============ PAYMENT ============ */
+
+document.getElementById("payBtn").onclick = async ()=>{
+  const net = document.getElementById("networkSelect").value;
+  const amount = document.getElementById("amount").value;
+
+  if(net==="tron"){
+    alert("پرداخت Tron نیازمند TronLink است (در فاز بعد)");
+    return;
+  }
+
+  if(!window.ethereum){
+    alert("MetaMask نصب نیست");
+    return;
+  }
+
+  const web3 = new Web3(window.ethereum);
+  await ethereum.request({method:"eth_requestAccounts"});
+  const [user] = await web3.eth.getAccounts();
+
+  const to = project[
+    net==="ethereum" ? "contractAddressEthereum" :
+    net==="polygon" ? "contractAddressMainnet" :
+    net==="bsc" ? "contractAddressBSC" :
+    "contractAddress"
+  ];
+
+  const abi=[{"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"type":"function"}];
+  const usdt = new web3.eth.Contract(abi, USDT[net]);
+
+  await usdt.methods.transfer(to, amount*1e6).send({from:user});
+  alert("پرداخت انجام شد");
+  loadProgress();
+};
+
+loadProject();
+</script>
+
+</body>
+</html>
