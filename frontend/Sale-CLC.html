@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLassChain - خرید توکن CLC</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="https://unpkg.com/@tronweb3/tronweb@latest/dist/TronWeb.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #6366f1;
+            --success: #10b981;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Vazirmatn', sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; }
+        .container { max-width:520px; width:100%; background:var(--card); border-radius:28px; padding:3.5rem 2.5rem; box-shadow:0 30px 60px rgba(0,0,0,0.6); border:1px solid rgba(99,102,241,0.2); backdrop-filter:blur(20px); }
+        h1 { font-size:3.2rem; font-weight:800; background:linear-gradient(90deg,#818cf8,#c084fc); -webkit-background-clip:text; background-clip:text; color:transparent; text-align:center; margin-bottom:0.8rem; }
+        .subtitle { text-align:center; font-size:1.35rem; color:var(--muted); margin-bottom:2.5rem; font-weight:300; }
+        .price { text-align:center; font-size:2.1rem; background:linear-gradient(90deg,#10b981,#34d399); -webkit-background-clip:text; color:transparent; font-weight:700; margin:2rem 0; }
+        .stats { text-align:center; font-size:1.1rem; color:#a78bfa; margin:1.5rem 0; font-weight:500; }
+        .wallet { background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:16px; padding:1.4rem; margin:2rem 0; font-size:1.15rem; text-align:center; }
+        .connected { color:#34d399; font-weight:600; }
+        .network { font-size:0.95rem; color:#a78bfa; margin-top:0.5rem; }
+        button { width:100%; padding:1.4rem; font-size:1.5rem; font-weight:600; border:none; border-radius:18px; cursor:pointer; transition:all 0.3s; margin:0.8rem 0; box-shadow:0 10px 25px rgba(0,0,0,0.3); }
+        #connectBtn { background:#6366f1; color:white; }
+        #connectBtn:hover { background:#818cf8; transform:translateY(-3px); }
+        #buyBtn { background:#10b981; color:white; }
+        #buyBtn:hover:not(:disabled) { background:#059669; transform:translateY(-3px); }
+        #buyBtn:disabled { background:#475569; cursor:not-allowed; opacity:0.7; }
+        .footer-note { margin-top:2.5rem; font-size:0.95rem; color:var(--muted); line-height:1.7; text-align:center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>CLassChain</h1>
+    <p class="subtitle">توکن رسمی پلتفرم شفاف مدرسه‌سازی ایران با بلاکچین</p>
+    <div class="price">پیش‌فروش ویژه: فقط ۱۰ دلار</div>
+    <div class="stats" id="stats">تا الان ۵۸ نفر خرید کردن — جمعاً ۵۸۰ دلار جمع شده</div>
+    
+    <div class="wallet" id="walletStatus">کیف پول متصل نیست</div>
+
+    <button id="connectBtn" onclick="connectWallet()">اتصال کیف پول (متامسک / تراست ولت)</button>
+    <button id="buyBtn" onclick="buyCLC()" disabled>خرید توکن CLC — پرداخت ۱۰ USDT</button>
+
+    <p class="footer-note">
+        پس از پرداخت موفق، توکن‌های CLC شما طی حداکثر ۲۴ ساعت به کیف پولتان واریز خواهد شد.<br>
+        از همراهی شما در ساخت مدارس ایران سپاسگزاریم
+    </p>
+</div>
+
+<script>
+let userAddress = null;
+let web3 = null;
+let currentNetwork = null;
+
+// آدرس کیف پول دریافت کننده (همه شبکه‌ها)
+const RECEIVER = {
+    tron: "TY7XrUK9LbRq4CWcLuiLVW9Noju2EiD1", // آدرس ترون شما
+    bsc:  "0x9626438503c8832a65ecc931b124825c417e467e",
+    eth:  "0x9626438503c8832a65ecc931b124825c417e467e",
+    polygon: "0x9626438503c8832a65ecc931b124825c417e467e"
+};
+
+// تنظیمات تلگرام (فقط این دو خط رو تغییر بده)
+const TELEGRAM_BOT_TOKEN = "7504613376:AAE9..."; // توکن بات تلگرام
+const TELEGRAM_CHAT_ID = "@classchain_sales";     // یا عدد آیدی مثل -100123456789
+
+async function connectWallet() {
+    document.getElementById('walletStatus').innerHTML = 'در حال اتصال...';
+
+    if (window.ethereum) {
+        try {
+            web3 = new Web3(window.ethereum);
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const accounts = await web3.eth.getAccounts();
+            userAddress = accounts[0];
+            const chainId = await web3.eth.getChainId();
+
+            let netName = "نامشخص";
+            if (chainId === 56) netName = "بایننس اسمارت چین (BSC)";
+            else if (chainId === 1) netName = "اتریوم Mainnet";
+            else if (chainId === 137) netName = "پالیگان";
+            else {
+                alert("شبکه پشتیبانی نمی‌شود! لطفاً به BSC، Polygon یا Ethereum سوئیچ کنید.");
+                document.getElementById('walletStatus').innerHTML = 'شبکه نامعتبر';
+                return;
+            }
+
+            currentNetwork = chainId;
+            document.getElementById('walletStatus').innerHTML = 
+                `<span class="connected">متصل شد<br>${userAddress.slice(0,10)}...${userAddress.slice(-8)}</span>
+                 <div class="network">شبکه: ${netName}</div>`;
+            document.getElementById('buyBtn').disabled = false;
+        } catch (err) {
+            document.getElementById('walletStatus').innerHTML = 'اتصال لغو شد';
+        }
+    }
+    else if (window.tronWeb && window.tronWeb.ready) {
+        userAddress = window.tronWeb.defaultAddress.base58;
+        currentNetwork = "tron";
+        document.getElementById('walletStatus').innerHTML = 
+            `<span class="connected">متصل شد<br>${userAddress.slice(0,10)}...${userAddress.slice(-8)}</span>
+             <div class="network">شبکه: ترون (TRC20) — سریع و ارزان</div>`;
+        document.getElementById('buyBtn').disabled = false;
+    }
+    else {
+        document.getElementById('walletStatus').innerHTML = 'کیف پول پیدا نشد';
+        alert('لطفاً متامسک، تراست ولت یا توکن پاکت نصب کنید');
+    }
+}
+
+async function buyCLC() {
+    if (!userAddress) return alert('اول کیف پول رو وصل کن!');
+
+    document.getElementById('buyBtn').disabled = true;
+    document.getElementById('buyBtn').textContent = 'در حال پردازش تراکنش...';
+
+    const amount = 10;
+
+    try {
+        let txHash, networkName;
+
+        if (currentNetwork === "tron") {
+            const contract = await window.tronWeb.contract().at("TR7NHqjeKQxGTCuuP8qACi7c5LnM5cFCCC"); // USDT TRC20
+            const result = await contract.transfer(RECEIVER.tron, amount * 1000000).send({ feeLimit: 10000000 });
+            txHash = result;
+            networkName = "TRON";
+        }
+        else {
+            const chainId = currentNetwork;
+            let usdtAddr, receiver;
+
+            if (chainId === 56) { usdtAddr = "0x55d398326f99059fF775485246999027B3197955"; receiver = RECEIVER.bsc; networkName = "BSC"; }
+            else if (chainId === 1) { usdtAddr = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; receiver = RECEIVER.eth; networkName = "Ethereum"; }
+            else if (chainId === 137) { usdtAddr = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; receiver = RECEIVER.polygon; networkName = "Polygon"; }
+            else throw new Error("شبکه پشتیبانی نمی‌شود");
+
+            const contract = new web3.eth.Contract([
+                {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
+            ], usdtAddr);
+
+            const amountWei = web3.utils.toWei("10", "mwei"); // 6 decimals
+            const tx = await contract.methods.transfer(receiver, amountWei).send({ from: userAddress });
+            txHash = tx.transactionHash;
+        }
+
+        // ثبت خرید و ارسال نوتیفیکیشن
+        logPurchase(userAddress, amount, networkName, txHash);
+
+        alert(`پرداخت موفق!\nتوکن‌های CLC طی ۲۴ ساعت به کیف پول شما واریز می‌شود.\nممنون از حمایت شما`);
+        
+    } catch (err) {
+        console.error(err);
+        alert('تراکنش ناموفق: ' + (err.message || "خطای ناشناخته"));
+    }
+
+    document.getElementById('buyBtn').disabled = false;
+    document.getElementById('buyBtn').textContent = 'خرید توکن CLC — پرداخت ۱۰ USDT';
+}
+
+function logPurchase(addr, amount, network, tx) {
+    const explorer = network === "TRON" ? "tronscan.org" : network === "BSC" ? "bscscan.com" : network === "Ethereum" ? "etherscan.io" : "polygonscan.com";
+    const message = `خرید جدید CLC!\n\nکیف پول: ${addr}\nمبلغ: ${amount} USDT\nشبکه: ${network}\nتراکنش: https://${explorer}/tx/${tx}\nزمان: ${new Date().toLocaleString('fa-IR')}`;
+
+    // ارسال به تلگرام
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(message)}`)
+            .catch(() => console.log("تلگرام در دسترس نیست"));
+    }
+
+    console.log("خرید ثبت شد:", { addr, amount, network, tx });
+    // در آینده: آپدیت شمارنده خریداران از سرور
+}
+</script>
+
+</body>
+</html>
